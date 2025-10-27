@@ -1,0 +1,567 @@
+openapi: 3.0.3
+info:
+  title: Ally Deduction API
+  description: API for deducing relevant ally types from resume and dream job description using Claude 3 Sonnet
+  version: 1.0.0
+
+paths:
+  /api/v1/ally-deduction/analyze:
+    post:
+      summary: Deduce ally types from resume and dream job
+      description: Analyzes user's resume and dream job description to generate relevant professional ally types with confidence scores
+      operationId: deduceAllyTypes
+      tags:
+        - Ally Deduction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllyDeductionRequest'
+      responses:
+        '202':
+          description: Analysis started, processing asynchronously
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllyDeductionStartResponse'
+        '400':
+          description: Invalid input (missing resume or dream job)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded (LLM API throttling)
+
+  /api/v1/ally-deduction/{analysis_id}/status:
+    get:
+      summary: Check ally deduction analysis status
+      description: Get the status of an ongoing ally type deduction analysis
+      operationId: getAllyDeductionStatus
+      tags:
+        - Ally Deduction
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analysis status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllyDeductionStatus'
+        '404':
+          description: Analysis not found
+
+  /api/v1/ally-deduction/{analysis_id}/results:
+    get:
+      summary: Get deduced ally types
+      description: Retrieve the complete list of deduced ally types with confidence scores and rationales
+      operationId: getAllyDeductionResults
+      tags:
+        - Ally Deduction
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: min_confidence
+          in: query
+          description: Filter ally types by minimum confidence score
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            default: 0.5
+      responses:
+        '200':
+          description: Deduced ally types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllyDeductionResults'
+        '404':
+          description: Analysis not found or not yet complete
+        '425':
+          description: Analysis still in progress
+
+  /api/v1/dream-jobs:
+    post:
+      summary: Create or update dream job description
+      description: Submit a new dream job description or update existing one
+      operationId: createDreamJob
+      tags:
+        - Dream Job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DreamJobRequest'
+      responses:
+        '201':
+          description: Dream job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DreamJobResponse'
+        '400':
+          description: Invalid dream job description (too short, etc.)
+
+  /api/v1/dream-jobs/{dream_job_id}:
+    get:
+      summary: Get dream job description
+      description: Retrieve a specific dream job description
+      operationId: getDreamJob
+      tags:
+        - Dream Job
+      parameters:
+        - name: dream_job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dream job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DreamJobResponse'
+        '404':
+          description: Dream job not found
+
+    put:
+      summary: Update dream job description
+      description: Update an existing dream job (creates new version, tracks evolution)
+      operationId: updateDreamJob
+      tags:
+        - Dream Job
+      parameters:
+        - name: dream_job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DreamJobUpdateRequest'
+      responses:
+        '200':
+          description: Dream job updated (new version created)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DreamJobResponse'
+
+  /api/v1/users/{user_id}/dream-jobs:
+    get:
+      summary: List user's dream job versions
+      description: Get all versions of a user's dream job descriptions (evolution history)
+      operationId: listUserDreamJobs
+      tags:
+        - Dream Job
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of dream job versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DreamJobList'
+
+  /api/v1/career-gaps/analyze:
+    post:
+      summary: Analyze career gaps
+      description: Identify skill and experience gaps between current background and dream job
+      operationId: analyzeCareerGaps
+      tags:
+        - Career Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GapAnalysisRequest'
+      responses:
+        '200':
+          description: Gap analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisResponse'
+
+components:
+  schemas:
+    AllyDeductionRequest:
+      type: object
+      required:
+        - user_id
+        - resume_id
+        - dream_job_description
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        resume_id:
+          type: string
+          format: uuid
+          description: Reference to parsed resume
+        dream_job_description:
+          type: string
+          minLength: 50
+          description: Detailed description of target career goals
+          example: "I want to transition from ML Engineer to AI Product Manager at a tech startup, focusing on B2B SaaS products in the healthcare space."
+
+    AllyDeductionStartResponse:
+      type: object
+      required:
+        - analysis_id
+        - status
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing]
+        estimated_completion:
+          type: string
+          format: date-time
+        message:
+          type: string
+          example: "Ally type deduction started. Expected completion in 20-30 seconds."
+
+    AllyDeductionStatus:
+      type: object
+      required:
+        - analysis_id
+        - status
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        current_step:
+          type: string
+          example: "Analyzing resume skills"
+        error_message:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+
+    AllyDeductionResults:
+      type: object
+      required:
+        - analysis_id
+        - user_id
+        - dream_job_id
+        - ally_types
+        - analyzed_at
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        dream_job_id:
+          type: string
+          format: uuid
+        ally_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeducedAllyType'
+          minItems: 1
+        total_ally_types:
+          type: integer
+          minimum: 1
+        analyzed_at:
+          type: string
+          format: date-time
+        llm_model:
+          type: string
+          example: "claude-3-sonnet-20240229"
+
+    DeducedAllyType:
+      type: object
+      required:
+        - id
+        - ally_type_name
+        - confidence_score
+        - selection_rationale
+        - search_queries
+        - rank
+      properties:
+        id:
+          type: string
+          format: uuid
+        ally_type_name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "AI/ML Technical Leaders"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: LLM confidence in recommendation (0.0-1.0)
+          example: 0.85
+        selection_rationale:
+          type: string
+          description: Explanation of why this ally type is relevant
+          example: "Given your ML engineering background and product manager goal, connecting with technical leaders who made similar transitions will provide insights on bridging the technical-business gap."
+        search_queries:
+          $ref: '#/components/schemas/SearchQueries'
+        engagement_strategy:
+          type: string
+          description: When and how to engage this ally type
+          example: "Reach out within first 2 weeks. Start with GitHub contributions, then LinkedIn connections."
+        rank:
+          type: integer
+          minimum: 1
+          description: Relevance ranking (1 = most relevant)
+        created_at:
+          type: string
+          format: date-time
+
+    SearchQueries:
+      type: object
+      required:
+        - github
+        - twitter
+        - linkedin
+      properties:
+        github:
+          type: string
+          example: "machine learning language:python followers:>1000"
+        twitter:
+          type: string
+          example: "#MachineLearning #ProductManagement (AI OR ML) -job"
+        linkedin:
+          type: string
+          example: "AI Product Manager OR ML Product Lead"
+
+    DreamJobRequest:
+      type: object
+      required:
+        - user_id
+        - description
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          minLength: 50
+          description: Detailed dream job description
+        desired_role:
+          type: string
+          example: "AI Product Manager"
+        desired_industry:
+          type: string
+          example: "Healthcare Tech"
+        desired_company_type:
+          type: string
+          example: "Series B Startup"
+
+    DreamJobUpdateRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          minLength: 50
+        rationale:
+          type: string
+          description: Why the dream job changed
+          example: "Realized passion lies in ethical AI rather than commercial products"
+
+    DreamJobResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - description
+        - version
+        - is_active
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        desired_role:
+          type: string
+        desired_industry:
+          type: string
+        desired_company_type:
+          type: string
+        required_skills:
+          type: array
+          items:
+            type: string
+        responsibilities:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        previous_version_id:
+          type: string
+          format: uuid
+
+    DreamJobList:
+      type: object
+      required:
+        - dream_jobs
+        - total
+      properties:
+        dream_jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DreamJobResponse'
+        total:
+          type: integer
+
+    GapAnalysisRequest:
+      type: object
+      required:
+        - user_id
+        - resume_id
+        - dream_job_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        resume_id:
+          type: string
+          format: uuid
+        dream_job_id:
+          type: string
+          format: uuid
+
+    GapAnalysisResponse:
+      type: object
+      required:
+        - analysis_id
+        - skill_gaps
+        - gap_severity
+        - recommended_ally_types
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        skill_gaps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillGap'
+        experience_gaps:
+          type: array
+          items:
+            type: string
+        bridge_opportunities:
+          type: array
+          items:
+            type: string
+        gap_severity:
+          type: string
+          enum: [low, medium, high]
+        estimated_time_to_close:
+          type: string
+          example: "6-12 months"
+        recommended_ally_types:
+          type: array
+          items:
+            type: string
+        analyzed_at:
+          type: string
+          format: date-time
+
+    SkillGap:
+      type: object
+      required:
+        - skill_name
+        - current_level
+        - required_level
+        - gap_severity
+      properties:
+        skill_name:
+          type: string
+          example: "Product Strategy"
+        current_level:
+          type: string
+          enum: [none, beginner, intermediate, advanced]
+        required_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        gap_severity:
+          type: string
+          enum: [low, medium, high, critical]
+        learning_resources:
+          type: array
+          items:
+            type: string
+        relevant_ally_types:
+          type: array
+          items:
+            type: string
+        estimated_learning_time:
+          type: string
+          example: "3-6 months"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

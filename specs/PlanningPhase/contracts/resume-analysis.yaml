@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Resume Analysis API
+  description: API for uploading and parsing resumes to extract skills, experience, and career information
+  version: 1.0.0
+
+paths:
+  /api/v1/resumes/upload:
+    post:
+      summary: Upload resume file
+      description: Upload a resume in PDF, Word, or text format for parsing
+      operationId: uploadResume
+      tags:
+        - Resume Analysis
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - user_id
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Resume file (PDF, DOCX, or TXT)
+                user_id:
+                  type: string
+                  format: uuid
+                  description: User identifier from auth system
+      responses:
+        '202':
+          description: Resume upload accepted, parsing in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadResponse'
+        '400':
+          description: Invalid file format or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: File size exceeds 10MB limit
+        '429':
+          description: Rate limit exceeded
+
+  /api/v1/resumes/{resume_id}/status:
+    get:
+      summary: Get resume parsing status
+      description: Check the status of resume parsing operation
+      operationId: getResumeStatus
+      tags:
+        - Resume Analysis
+      parameters:
+        - name: resume_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Parsing status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeParsingStatus'
+        '404':
+          description: Resume not found
+
+  /api/v1/resumes/{resume_id}:
+    get:
+      summary: Get parsed resume data
+      description: Retrieve structured data extracted from resume
+      operationId: getParsedResume
+      tags:
+        - Resume Analysis
+      parameters:
+        - name: resume_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Parsed resume data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsedResume'
+        '404':
+          description: Resume not found
+        '425':
+          description: Parsing not yet complete
+
+  /api/v1/users/{user_id}/resumes:
+    get:
+      summary: List user's resumes
+      description: Get all resumes uploaded by a user
+      operationId: listUserResumes
+      tags:
+        - Resume Analysis
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of resumes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeList'
+
+components:
+  schemas:
+    ResumeUploadResponse:
+      type: object
+      required:
+        - resume_id
+        - status
+        - message
+      properties:
+        resume_id:
+          type: string
+          format: uuid
+          description: Unique identifier for uploaded resume
+        status:
+          type: string
+          enum: [accepted, parsing]
+          description: Current processing status
+        message:
+          type: string
+          example: "Resume uploaded successfully. Parsing in progress."
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated parsing completion time
+
+    ResumeParsingStatus:
+      type: object
+      required:
+        - resume_id
+        - status
+      properties:
+        resume_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [uploaded, parsing, parsed_success, parsing_failed]
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        error_message:
+          type: string
+          description: Error details if parsing failed
+        parsed_at:
+          type: string
+          format: date-time
+
+    ParsedResume:
+      type: object
+      required:
+        - id
+        - user_id
+        - raw_text
+        - skills
+        - job_titles
+        - companies
+        - career_timeline
+        - parsing_confidence
+        - parsed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        raw_text:
+          type: string
+          description: Full extracted text from resume
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["Python", "Machine Learning", "FastAPI"]
+        experience_years:
+          type: number
+          format: float
+          minimum: 0
+          example: 5.5
+        job_titles:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobTitle'
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/Education'
+        achievements:
+          type: array
+          items:
+            type: string
+        career_timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEvent'
+        current_role:
+          type: string
+          example: "Senior ML Engineer"
+        current_company:
+          type: string
+          example: "AI Startup Inc"
+        parsing_confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence score for parsing quality
+        parsed_at:
+          type: string
+          format: date-time
+        parser_version:
+          type: string
+          example: "1.0.0"
+
+    JobTitle:
+      type: object
+      required:
+        - title
+        - start
+      properties:
+        title:
+          type: string
+          example: "Software Engineer"
+        start:
+          type: string
+          format: date
+          example: "2020-01"
+        end:
+          type: string
+          format: date
+          example: "2023-06"
+
+    Company:
+      type: object
+      required:
+        - name
+        - start
+      properties:
+        name:
+          type: string
+          example: "TechCorp"
+        start:
+          type: string
+          format: date
+        end:
+          type: string
+          format: date
+
+    Education:
+      type: object
+      properties:
+        degree:
+          type: string
+          example: "BS Computer Science"
+        institution:
+          type: string
+          example: "State University"
+        year:
+          type: integer
+          example: 2019
+
+    TimelineEvent:
+      type: object
+      required:
+        - date
+        - event
+      properties:
+        date:
+          type: string
+          format: date
+        event:
+          type: string
+          example: "Joined TechCorp as Software Engineer"
+
+    ResumeList:
+      type: object
+      required:
+        - resumes
+        - total
+        - limit
+        - offset
+      properties:
+        resumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResumeSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ResumeSummary:
+      type: object
+      required:
+        - id
+        - file_name
+        - upload_date
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        upload_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [uploaded, parsing, parsed_success, parsing_failed]
+        parsing_confidence:
+          type: number
+          format: float
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "invalid_file_format"
+        message:
+          type: string
+          example: "Supported formats: PDF, DOCX, TXT"
+        details:
+          type: object

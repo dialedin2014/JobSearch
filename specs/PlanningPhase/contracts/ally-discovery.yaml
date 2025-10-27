@@ -1,0 +1,570 @@
+openapi: 3.0.3
+info:
+  title: Ally Discovery API
+  description: API for discovering professional allies across GitHub, Twitter/X, and LinkedIn based on deduced ally types
+  version: 1.0.0
+
+paths:
+  /api/v1/ally-discovery/search:
+    post:
+      summary: Search for professional allies
+      description: Discover professionals matching deduced ally types across multiple platforms
+      operationId: searchAllies
+      tags:
+        - Ally Discovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllySearchRequest'
+      responses:
+        '202':
+          description: Search started (async processing)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllySearchStartResponse'
+        '400':
+          description: Invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded (external APIs throttling)
+
+  /api/v1/ally-discovery/{search_id}/status:
+    get:
+      summary: Check ally discovery status
+      description: Get the status of an ongoing ally discovery search
+      operationId: getAllySearchStatus
+      tags:
+        - Ally Discovery
+      parameters:
+        - name: search_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Search status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllySearchStatus'
+
+  /api/v1/ally-discovery/{search_id}/results:
+    get:
+      summary: Get discovered allies
+      description: Retrieve discovered professional allies with relevance scores and match explanations
+      operationId: getAllySearchResults
+      tags:
+        - Ally Discovery
+      parameters:
+        - name: search_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: platform
+          in: query
+          description: Filter by platform
+          schema:
+            type: string
+            enum: [github, twitter, linkedin, all]
+            default: all
+        - name: min_relevance
+          in: query
+          description: Minimum relevance score filter
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            default: 0.6
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Discovered allies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllySearchResults'
+        '404':
+          description: Search not found
+        '425':
+          description: Search still in progress
+
+  /api/v1/ally-types/{ally_type_id}/allies:
+    get:
+      summary: Get allies for specific ally type
+      description: List all discovered allies matching a specific ally type
+      operationId: getAlliesForType
+      tags:
+        - Ally Discovery
+      parameters:
+        - name: ally_type_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [relevance, discovered_date]
+            default: relevance
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of allies for this type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllyList'
+
+  /api/v1/career-strategy:
+    post:
+      summary: Generate career transition strategy
+      description: Create a phased strategy for engaging ally types based on career goals
+      operationId: generateCareerStrategy
+      tags:
+        - Career Strategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CareerStrategyRequest'
+      responses:
+        '200':
+          description: Strategy generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CareerStrategyResponse'
+
+  /api/v1/users/{user_id}/career-strategy:
+    get:
+      summary: Get user's career transition strategy
+      description: Retrieve the current career transition strategy for a user
+      operationId: getUserCareerStrategy
+      tags:
+        - Career Strategy
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User's career strategy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CareerStrategyResponse'
+        '404':
+          description: No strategy found for user
+
+  /api/v1/dream-job-evolution/{user_id}:
+    get:
+      summary: Get dream job evolution history
+      description: Track how user's career goals have changed over time with ally type adjustments
+      operationId: getDreamJobEvolution
+      tags:
+        - Career Evolution
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Evolution history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DreamJobEvolutionResponse'
+
+components:
+  schemas:
+    AllySearchRequest:
+      type: object
+      required:
+        - user_id
+        - ally_type_ids
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        ally_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of ally type IDs to search for
+        platforms:
+          type: array
+          items:
+            type: string
+            enum: [github, twitter, linkedin]
+          default: [github, twitter, linkedin]
+        max_results_per_platform:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+
+    AllySearchStartResponse:
+      type: object
+      required:
+        - search_id
+        - status
+      properties:
+        search_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, searching]
+        estimated_completion:
+          type: string
+          format: date-time
+        platforms_queued:
+          type: array
+          items:
+            type: string
+
+    AllySearchStatus:
+      type: object
+      required:
+        - search_id
+        - status
+      properties:
+        search_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, searching, completed, partial_failure, failed]
+        progress:
+          type: object
+          properties:
+            github:
+              type: string
+              enum: [pending, searching, completed, failed]
+            twitter:
+              type: string
+              enum: [pending, searching, completed, failed]
+            linkedin:
+              type: string
+              enum: [pending, searching, completed, failed]
+        results_count:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+
+    AllySearchResults:
+      type: object
+      required:
+        - search_id
+        - allies
+        - total
+      properties:
+        search_id:
+          type: string
+          format: uuid
+        allies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessionalAlly'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        platforms_searched:
+          type: array
+          items:
+            type: string
+
+    ProfessionalAlly:
+      type: object
+      required:
+        - id
+        - ally_type_id
+        - name
+        - platform
+        - profile_url
+        - match_explanation
+        - relevance_score
+      properties:
+        id:
+          type: string
+          format: uuid
+        ally_type_id:
+          type: string
+          format: uuid
+        ally_type_name:
+          type: string
+          example: "AI/ML Technical Leaders"
+        name:
+          type: string
+          example: "Jane Smith"
+        current_title:
+          type: string
+          example: "VP of AI Products"
+        current_company:
+          type: string
+          example: "TechCorp AI"
+        platform:
+          type: string
+          enum: [github, twitter, linkedin]
+        profile_url:
+          type: string
+          format: uri
+          example: "https://linkedin.com/in/janesmith"
+        expertise_areas:
+          type: array
+          items:
+            type: string
+          example: ["Machine Learning", "Product Management", "Team Leadership"]
+        career_background:
+          type: string
+          description: Summary of career experience
+          example: "Transitioned from ML Engineer to Product Manager at Series B startup. Led AI product team to $10M ARR."
+        match_explanation:
+          type: string
+          description: Why this person matches the ally type
+          example: "Successfully transitioned from ML Engineer to AI Product Manager, matching your career goal. Has 8 years experience in ML and 4 years in product roles."
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: How well this person matches the ally type
+          example: 0.87
+        discovered_at:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+
+    AllyList:
+      type: object
+      required:
+        - allies
+        - total
+      properties:
+        allies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessionalAlly'
+        total:
+          type: integer
+        ally_type_name:
+          type: string
+
+    CareerStrategyRequest:
+      type: object
+      required:
+        - user_id
+        - dream_job_id
+        - gap_analysis_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        dream_job_id:
+          type: string
+          format: uuid
+        gap_analysis_id:
+          type: string
+          format: uuid
+
+    CareerStrategyResponse:
+      type: object
+      required:
+        - id
+        - strategy_phases
+        - total_estimated_duration
+        - priority_ally_types
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        dream_job_id:
+          type: string
+          format: uuid
+        strategy_phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyPhase'
+        total_estimated_duration:
+          type: string
+          example: "12-18 months"
+        priority_ally_types:
+          type: array
+          items:
+            type: string
+          description: Ordered list of ally types by urgency
+        success_metrics:
+          type: array
+          items:
+            type: string
+        generated_at:
+          type: string
+          format: date-time
+
+    StrategyPhase:
+      type: object
+      required:
+        - phase
+        - duration
+        - ally_types
+        - goals
+        - actions
+      properties:
+        phase:
+          type: integer
+          minimum: 1
+          example: 1
+        duration:
+          type: string
+          example: "0-3 months"
+        ally_types:
+          type: array
+          items:
+            type: string
+          example: ["AI/ML Technical Leaders"]
+        goals:
+          type: array
+          items:
+            type: string
+          example: ["Learn product mindset from technical perspective"]
+        actions:
+          type: array
+          items:
+            type: string
+          example: ["Follow on GitHub", "Engage with blog posts", "Attend meetups"]
+
+    DreamJobEvolutionResponse:
+      type: object
+      required:
+        - user_id
+        - evolutions
+        - total_versions
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        evolutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DreamJobEvolution'
+        total_versions:
+          type: integer
+        current_version:
+          type: integer
+
+    DreamJobEvolution:
+      type: object
+      required:
+        - id
+        - from_version
+        - to_version
+        - change_summary
+        - ally_type_changes
+        - changed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        from_version:
+          type: integer
+          description: Previous dream job version number
+        to_version:
+          type: integer
+          description: New dream job version number
+        from_dream_job_id:
+          type: string
+          format: uuid
+        to_dream_job_id:
+          type: string
+          format: uuid
+        change_summary:
+          type: string
+          example: "Shifted focus from Product Manager to AI Ethics Researcher"
+        ally_type_changes:
+          type: object
+          properties:
+            removed:
+              type: array
+              items:
+                type: string
+              example: ["Product Management Veterans"]
+            added:
+              type: array
+              items:
+                type: string
+              example: ["AI Ethics Researchers", "Academic AI Researchers"]
+            retained:
+              type: array
+              items:
+                type: string
+              example: ["AI/ML Technical Leaders"]
+        rationale:
+          type: string
+          description: Why the goals evolved
+          example: "Realized passion lies in ethical implications rather than commercial products"
+        changed_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
