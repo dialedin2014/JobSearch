@@ -40,6 +40,11 @@ class AllyType(Base):
 
     # Relationships
     user_profile = relationship("UserProfile", back_populates="ally_types")
+    contacts = relationship(
+        "Contact",
+        back_populates="ally_type",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<AllyType(id={self.id}, name={self.name}, user_profile_id={self.user_profile_id})>"

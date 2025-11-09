@@ -55,6 +55,9 @@ class UserProfile(Base):
         "AllyType", back_populates="user_profile", cascade="all, delete-orphan")
     dream_jobs = relationship(
         "DreamJobDescription", back_populates="user", cascade="all, delete-orphan")
+    search_queries = relationship(
+        "SearchQuery", back_populates="user_profile", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<UserProfile(id={self.id}, email={self.email})>"

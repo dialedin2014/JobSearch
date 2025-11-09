@@ -1,6 +1,9 @@
 """Alembic environment configuration."""
 
-from src.models import UserProfile, ParsedResume, AllyType, DeducedAllyType, DreamJobDescription
+from src.models import (
+    UserProfile, ParsedResume, AllyType, DeducedAllyType,
+    DreamJobDescription, Contact, Content, SearchQuery, SearchResult
+)
 from src.core.database import Base
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
