@@ -19,7 +19,7 @@ def generate_uuid():
 class UserProfile(Base):
     """
     User profile with uploaded resume data.
-    
+
     Attributes:
         id: Unique identifier (UUID)
         user_id: External auth system user ID
@@ -43,14 +43,18 @@ class UserProfile(Base):
     resume_file_name = Column(String, nullable=True)
     resume_file_size = Column(Integer, nullable=True)
     resume_upload_date = Column(DateTime, nullable=True)
-    parsed_resume_id = Column(String, ForeignKey("parsed_resumes.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow,
+                        onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
-    parsed_resume = relationship("ParsedResume", back_populates="user_profile", uselist=False)
-    ally_types = relationship("AllyType", back_populates="user_profile", cascade="all, delete-orphan")
-    dream_jobs = relationship("DreamJobDescription", back_populates="user", cascade="all, delete-orphan")
+    # One-to-many: A user can have multiple resume versions
+    parsed_resumes = relationship(
+        "ParsedResume", back_populates="user_profile", cascade="all, delete-orphan")
+    ally_types = relationship(
+        "AllyType", back_populates="user_profile", cascade="all, delete-orphan")
+    dream_jobs = relationship(
+        "DreamJobDescription", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<UserProfile(id={self.id}, email={self.email})>"

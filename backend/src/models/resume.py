@@ -14,7 +14,7 @@ from src.models.user_profile import generate_uuid
 class ParsedResume(Base):
     """
     Structured resume data extracted from uploaded file.
-    
+
     Attributes:
         id: Unique identifier (UUID)
         user_profile_id: Reference to UserProfile
@@ -33,7 +33,8 @@ class ParsedResume(Base):
     __tablename__ = "parsed_resumes"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_profile_id = Column(String, ForeignKey("user_profiles.id"), nullable=False, index=True)
+    user_profile_id = Column(String, ForeignKey(
+        "user_profiles.id"), nullable=False, index=True)
     raw_text = Column(Text, nullable=False)
     skills = Column(JSON, nullable=False, default=list)
     achievements = Column(JSON, nullable=True, default=list)
@@ -46,7 +47,8 @@ class ParsedResume(Base):
     parser_version = Column(String, nullable=False, default="1.0")
 
     # Relationships
-    user_profile = relationship("UserProfile", back_populates="parsed_resume")
+    # Many-to-one: Many resumes can belong to one user
+    user_profile = relationship("UserProfile", back_populates="parsed_resumes")
 
     def __repr__(self):
-        return f"<ParsedResume(id={self.id}, user_id={self.user_id}, confidence={self.parsing_confidence})>"
+        return f"<ParsedResume(id={self.id}, user_id={self.user_profile_id}, confidence={self.parsing_confidence})>"

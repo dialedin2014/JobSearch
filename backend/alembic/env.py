@@ -1,5 +1,7 @@
 """Alembic environment configuration."""
 
+from src.models import UserProfile, ParsedResume, AllyType, DeducedAllyType, DreamJobDescription
+from src.core.database import Base
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -11,7 +13,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import your models' Base
-from src.core.database import Base
+
+# Import all models to ensure they're registered
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,7 +26,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Use DATABASE_URL from environment if available
-database_url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+database_url = os.getenv(
+    "DATABASE_URL", config.get_main_option("sqlalchemy.url"))
 config.set_main_option("sqlalchemy.url", database_url)
 
 # add your model's MetaData object here
