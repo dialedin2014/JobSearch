@@ -2,17 +2,18 @@
 
 **Feature**: 001-civic-ally-hunter  
 **Created**: November 8, 2025  
-**Constitution Version**: 2.0.0
+**Constitution Version**: 2.1.0
 
 ## Constitution Compliance Check
 
-✅ **I. RAG-First AI Architecture**: LangChain + Claude 3 Sonnet (Anthropic API) + FAISS vector search  
+✅ **I. RAG-First AI Architecture**: LangChain + Claude Sonnet 4.5 (claude-sonnet-4-5-20250929 via Anthropic API) + FAISS vector search  
 ✅ **II. Privacy & Ethical Data Use**: Public APIs only, explicit ToS compliance, rate limiting  
 ✅ **III. Container-Native Development**: Dev Container with Python 3.12, pinned dependencies  
 ✅ **IV. Priority-Driven Feature Development**: P1-P4 user stories with acceptance scenarios  
 ✅ **V. API Rate Limiting & Resilience**: Circuit breakers, exponential backoff, caching for all external APIs  
+⚠️ **VI. Test-Driven Phase Completion**: Phase 1 code complete but automated tests required before proceeding to Phase 2
 
-⚠️ **Constitution Correction**: Spec references "Ollama with Llama3" but Constitution v2.0.0 mandates Claude 3 Sonnet (Anthropic API). This plan uses Claude 3 Sonnet.
+⚠️ **Constitution Update**: Constitution v2.1.0 (November 9, 2025) mandates Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) and requires automated pytest tests before phase completion. This plan updated to reflect new requirements.
 
 ## Architecture Overview
 
@@ -67,11 +68,12 @@
 ### Technology Stack
 
 **Backend**:
+
 - Python 3.12 (constitutional requirement)
 - FastAPI 0.104+ for REST API
 - LangChain 0.1.0+ for RAG orchestration
 - LangChain Community 0.1.0+ for integrations
-- anthropic 0.8.1+ for Claude 3 Sonnet API
+- anthropic 0.8.1+ for Claude Sonnet 4.5 API (claude-sonnet-4-5-20250929)
 - FAISS (faiss-cpu 1.7.4+) for vector search
 - sentence-transformers 2.2.2+ (all-MiniLM-L6-v2 model, 384-dim embeddings)
 - SQLAlchemy 2.0+ for ORM
@@ -87,19 +89,22 @@
 - python-jose 3.3+ for JWT authentication
 
 **Frontend**:
+
 - Next.js 14.0+ with React 18
 - TypeScript 5.3+
 - Recharts or D3.js for network visualization
 - Tailwind CSS 3.3+ for styling
 
 **Infrastructure**:
+
 - PostgreSQL 15+ (production)
 - SQLite (development)
 - Docker + Docker Compose
 - VS Code Dev Container
 
 **External APIs**:
-- Anthropic API (Claude 3 Sonnet: claude-3-sonnet-20240229)
+
+- Anthropic API (Claude Sonnet 4.5: claude-sonnet-4-5-20250929)
 - GitHub API v3 (5000 req/hour authenticated)
 - Twitter/X API v2 (300 req/15min basic tier)
 - LinkedIn public endpoints (limited, may require manual URL input)
@@ -110,6 +115,7 @@
 ### Core Entities
 
 #### UserProfile
+
 ```python
 class UserProfile(Base):
     id: UUID (PK)
@@ -126,6 +132,7 @@ class UserProfile(Base):
 ```
 
 #### ParsedResume
+
 ```python
 class ParsedResume(Base):
     id: UUID (PK)
@@ -145,6 +152,7 @@ class ParsedResume(Base):
 ```
 
 #### AllyType
+
 ```python
 class AllyType(Base):
     id: UUID (PK)
@@ -160,6 +168,7 @@ class AllyType(Base):
 ```
 
 #### Contact
+
 ```python
 class Contact(Base):
     id: UUID (PK)
@@ -183,6 +192,7 @@ class Contact(Base):
 ```
 
 #### Content
+
 ```python
 class Content(Base):
     id: UUID (PK)
@@ -198,6 +208,7 @@ class Content(Base):
 ```
 
 #### Organization
+
 ```python
 class Organization(Base):
     id: UUID (PK)
@@ -214,6 +225,7 @@ class Organization(Base):
 ```
 
 #### NetworkConnection
+
 ```python
 class NetworkConnection(Base):
     id: UUID (PK)
@@ -228,6 +240,7 @@ class NetworkConnection(Base):
 ```
 
 #### SearchQuery
+
 ```python
 class SearchQuery(Base):
     id: UUID (PK)
@@ -242,6 +255,7 @@ class SearchQuery(Base):
 ```
 
 #### BridgePitch
+
 ```python
 class BridgePitch(Base):
     id: UUID (PK)
@@ -251,7 +265,7 @@ class BridgePitch(Base):
     ally_type_context: str
     generated_message: str (Text)
     collaboration_proposal: str (Text)
-    llm_model: str # "claude-3-sonnet-20240229"
+    llm_model: str # "claude-sonnet-4-5-20250929"
     llm_prompt_version: str
     created_at: datetime
 ```
@@ -269,6 +283,7 @@ class BridgePitch(Base):
 **User Story 1 Support**: Profile Setup and Ally Type Configuration
 
 **Tasks**:
+
 1. Project setup (Dev Container, requirements.txt, FastAPI scaffold)
 2. Database schema implementation (Alembic migrations)
 3. Resume upload endpoint (multipart/form-data, 10MB limit)
@@ -286,6 +301,7 @@ class BridgePitch(Base):
    - Index ally types for semantic matching
 
 **Deliverables**:
+
 - Backend API endpoints for resume + ally types
 - Resume parsing with 95% success rate (SC-004)
 - Vector indexing operational
@@ -300,6 +316,7 @@ class BridgePitch(Base):
 **User Story 1 Support**: Semantic search across platforms
 
 **Tasks**:
+
 1. External API client implementations:
    - GitHub API client (search users, issues, with rate limiting)
    - Twitter/X API client (search tweets, with 15min window limits)
@@ -323,6 +340,7 @@ class BridgePitch(Base):
    - GET /search/{query_id}/results (pagination)
 
 **Deliverables**:
+
 - Multi-platform search functional
 - Relevance scoring ≥0.7 for matched ally types (SC-003: 80% accuracy target)
 - Rate limiting preventing API bans
@@ -337,8 +355,9 @@ class BridgePitch(Base):
 **User Story 2 Support**: Counter-query generation + bridge pitches
 
 **Tasks**:
+
 1. LangChain setup:
-   - Configure Anthropic API client (Claude 3 Sonnet)
+   - Configure Anthropic API client (Claude Sonnet 4.5: claude-sonnet-4-5-20250929)
    - Implement RAG chain for counter-query generation
    - System prompt: "Generate opposing viewpoints to: {query} within context of {ally_type}"
 2. Shadow sequence generator service:
@@ -360,9 +379,10 @@ class BridgePitch(Base):
    - GET /bridge-pitches/{id}
 
 **Deliverables**:
+
 - Counter-query generation operational (90% quality, SC-010)
 - Bridge pitches reference resume achievements (100%, SC-005)
-- Claude 3 Sonnet integration with cost tracking
+- Claude Sonnet 4.5 integration with cost tracking
 
 **Testing**: Search "ML optimization" → generate counter-queries → verify "AI bias concerns" result → generate bridge pitch → verify resume achievement reference
 
@@ -373,6 +393,7 @@ class BridgePitch(Base):
 **User Story 3 Support**: Visualize connection paths
 
 **Tasks**:
+
 1. Organization data extraction:
    - Parse companies from resume work history
    - Fetch organization data from Apollo API
@@ -395,6 +416,7 @@ class BridgePitch(Base):
    - Warm intro suggestions
 
 **Deliverables**:
+
 - Network mapping identifies connections (60% success rate, SC-006)
 - Graph visualization functional
 - Warm intro suggestions generated
@@ -408,6 +430,7 @@ class BridgePitch(Base):
 **User Story 4 Support**: Personalized outreach messages
 
 **Tasks**:
+
 1. Outreach template generator service:
    - Input: Contact + target's Content (posts/issues)
    - LLM prompt: "Match {resume_achievements} to {target_interests} and create collaboration proposal"
@@ -424,6 +447,7 @@ class BridgePitch(Base):
    - Deliver within 10s for 50 results (SC-009)
 
 **Deliverables**:
+
 - Outreach templates generated with resume-target matching
 - Export functionality operational (10s for 50 results, SC-009)
 
@@ -434,6 +458,7 @@ class BridgePitch(Base):
 ### Phase 6: Polish & Production Readiness
 
 **Tasks**:
+
 1. Frontend UI polish:
    - Responsive design (mobile-friendly)
    - Loading states, error handling
@@ -456,6 +481,7 @@ class BridgePitch(Base):
    - Deployment guide
 
 **Deliverables**:
+
 - 99.5% uptime (SC-008)
 - Production-ready deployment
 
@@ -466,6 +492,7 @@ class BridgePitch(Base):
 ### Core Endpoints
 
 #### Authentication
+
 ```
 POST   /api/v1/auth/register           # Register new user
 POST   /api/v1/auth/login              # Login and get JWT token
@@ -474,6 +501,7 @@ GET    /api/v1/auth/me                 # Get current user profile
 ```
 
 #### Resume Management
+
 ```
 POST   /api/v1/resumes/upload          # Upload resume file
 GET    /api/v1/resumes/{id}            # Get parsed resume
@@ -481,6 +509,7 @@ GET    /api/v1/resumes/{id}/embedding  # Get FAISS vector
 ```
 
 #### Ally Type Management
+
 ```
 POST   /api/v1/ally-types              # Create ally type
 GET    /api/v1/ally-types              # List user's ally types
@@ -492,6 +521,7 @@ POST   /api/v1/ally-types/import       # Import ally types from JSON
 ```
 
 #### Search
+
 ```
 POST   /api/v1/search                  # Execute search with ally filters
 GET    /api/v1/search/{query_id}       # Get search results (paginated)
@@ -499,6 +529,7 @@ POST   /api/v1/search/counter-queries  # Generate shadow sequences
 ```
 
 #### Shadow Sequence & Bridge Pitches
+
 ```
 POST   /api/v1/bridge-pitches          # Generate bridge pitch for contact
 GET    /api/v1/bridge-pitches/{id}     # Get bridge pitch
@@ -506,12 +537,14 @@ GET    /api/v1/bridge-pitches          # List user's bridge pitches
 ```
 
 #### Network Mapping
+
 ```
 GET    /api/v1/network-map             # Get network graph (user → targets)
 GET    /api/v1/network-map/connections # Get connection details
 ```
 
 #### Outreach Templates
+
 ```
 POST   /api/v1/outreach-templates      # Generate outreach message
 GET    /api/v1/outreach-templates/{id} # Get template
@@ -519,6 +552,7 @@ PUT    /api/v1/outreach-templates/{id} # Edit template
 ```
 
 #### Export
+
 ```
 GET    /api/v1/export/search/{query_id}      # Export search results (markdown)
 GET    /api/v1/export/network-map/{user_id}  # Export network graph
@@ -529,45 +563,49 @@ GET    /api/v1/export/outreach-templates     # Export all templates
 
 ### Technical Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| LinkedIn API rate limits | High | High | Implement aggressive caching, fallback to manual URL input, use Apollo API for enrichment |
-| Resume parsing accuracy <95% | Medium | Medium | Multi-parser strategy (PyPDF2 → pdfplumber fallback), confidence scoring, manual review option |
-| Claude 3 Sonnet API costs exceed budget | Medium | Medium | Implement response caching (24hr TTL), prompt optimization, usage caps per user |
-| FAISS index performance degrades at scale | Low | Medium | Implement index sharding by user, periodic index optimization, consider Pinecone for production |
-| Network mapping finds no connections (>40% cases) | Medium | Low | Provide alternative strategies (events, associations), expand org data sources |
-| Counter-query quality <90% | Medium | Medium | Implement quality scoring, LLM prompt refinement, manual review option |
+| Risk                                              | Likelihood | Impact | Mitigation                                                                                      |
+| ------------------------------------------------- | ---------- | ------ | ----------------------------------------------------------------------------------------------- |
+| LinkedIn API rate limits                          | High       | High   | Implement aggressive caching, fallback to manual URL input, use Apollo API for enrichment       |
+| Resume parsing accuracy <95%                      | Medium     | Medium | Multi-parser strategy (PyPDF2 → pdfplumber fallback), confidence scoring, manual review option  |
+| Claude 3 Sonnet API costs exceed budget           | Medium     | Medium | Implement response caching (24hr TTL), prompt optimization, usage caps per user                 |
+| FAISS index performance degrades at scale         | Low        | Medium | Implement index sharding by user, periodic index optimization, consider Pinecone for production |
+| Network mapping finds no connections (>40% cases) | Medium     | Low    | Provide alternative strategies (events, associations), expand org data sources                  |
+| Counter-query quality <90%                        | Medium     | Medium | Implement quality scoring, LLM prompt refinement, manual review option                          |
 
 ### Compliance Risks
 
-| Risk | Mitigation |
-|------|------------|
-| LinkedIn ToS violation | Use only public endpoints, respect robots.txt, implement user-agent identification, consider manual URL input |
-| GitHub API abuse | Implement strict rate limiting (5000/hr), cache aggressively, exponential backoff |
-| Twitter API tier limits | Cache tweets for 24hrs, prioritize recent content, graceful degradation if quota exceeded |
-| GDPR/CCPA compliance for contact data | Store only public data, provide data deletion, clear privacy policy, user consent for contact enrichment |
+| Risk                                  | Mitigation                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| LinkedIn ToS violation                | Use only public endpoints, respect robots.txt, implement user-agent identification, consider manual URL input |
+| GitHub API abuse                      | Implement strict rate limiting (5000/hr), cache aggressively, exponential backoff                             |
+| Twitter API tier limits               | Cache tweets for 24hrs, prioritize recent content, graceful degradation if quota exceeded                     |
+| GDPR/CCPA compliance for contact data | Store only public data, provide data deletion, clear privacy policy, user consent for contact enrichment      |
 
 ## Testing Strategy
 
 ### Unit Tests
+
 - Resume parser (95% extraction accuracy)
 - Ally type matching logic
 - LLM prompt construction
 - Network graph algorithms
 
 ### Integration Tests
+
 - Multi-platform search orchestration
 - FAISS vector search accuracy
 - API rate limiting enforcement
 - Database transactions
 
 ### Acceptance Tests
+
 - User Story 1: Upload resume → define ally types → search → verify relevance ≥0.7
 - User Story 2: Generate counter-queries → verify 90% quality → generate bridge pitch → verify resume references
 - User Story 3: Network mapping → verify connection path → verify warm intro suggestion
 - User Story 4: Generate outreach template → verify resume-target matching
 
 ### Performance Tests
+
 - Search completion <30s (SC-002)
 - Export <10s for 50 results (SC-009)
 - Resume upload + parsing <5min (SC-001)
@@ -577,6 +615,7 @@ GET    /api/v1/export/outreach-templates     # Export all templates
 **Development**: Docker Compose (PostgreSQL + Backend + Frontend)  
 **Staging**: Cloud platform (Heroku/Render/Railway) with PostgreSQL add-on  
 **Production**: Cloud platform with:
+
 - Load balancer
 - Auto-scaling (2-10 instances)
 - Managed PostgreSQL
@@ -584,6 +623,7 @@ GET    /api/v1/export/outreach-templates     # Export all templates
 - CloudFlare CDN
 
 **Environment Variables**:
+
 ```
 ANTHROPIC_API_KEY=<secret>
 GITHUB_API_TOKEN=<secret>
@@ -601,6 +641,7 @@ ENVIRONMENT=production
 ## Success Metrics Dashboard
 
 Track against Success Criteria:
+
 - **SC-001**: Time to first search (target: <5min)
 - **SC-002**: Search response time (target: <30s)
 - **SC-003**: Relevance rating (target: ≥80%)
@@ -613,6 +654,7 @@ Track against Success Criteria:
 - **SC-010**: Counter-query quality (target: ≥90%)
 
 **Monitoring**:
+
 - Anthropic API cost per user
 - API rate limit violations
 - Search result quality (user ratings)

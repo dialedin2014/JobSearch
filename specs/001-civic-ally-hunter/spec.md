@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Professional Ally-Hunting Platform - A RAG-powered application that discovers and connects with professional allies across user-defined domains by analyzing GitHub issues, X/Twitter threads, and public LinkedIn data, featuring shadow sequence amplification and org mirage mapping for strategic networking based on user's resume and target ally types"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Profile Setup and Ally Type Configuration (Priority: P1)
 
@@ -81,7 +81,7 @@ A user generates highly personalized outreach messages that reference specific r
 - How does system handle LinkedIn rate limits during ally type-specific data collection?
 - What occurs when user defines conflicting or overlapping ally types that produce redundant results?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -101,7 +101,7 @@ A user generates highly personalized outreach messages that reference specific r
 - **FR-014**: Users MUST be able to save and load ally type definitions and search configurations
 - **FR-015**: System MUST handle authentication securely for required API keys (GitHub PAT, Apollo API key)
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **User Resume**: Parsed resume document containing skills, achievements, work history, education, and extractable keywords for ally matching
 - **Ally Type**: User-defined professional category with name, keywords, criteria, and search parameters (e.g., "Fintech Investors", "AI Researchers", "Sustainability Consultants")
@@ -113,7 +113,7 @@ A user generates highly personalized outreach messages that reference specific r
 - **Bridge Pitch**: Generated outreach message template with target contact, referenced resume achievements, ally type context, and collaboration proposal
 - **Ally Match Score**: Calculated relevance between contact and user's ally type definitions based on keywords, skills, and resume alignment
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -137,13 +137,13 @@ A user generates highly personalized outreach messages that reference specific r
 - Professionals across various industries value diverse perspectives and are open to collaborative approaches
 - Resume parsing technology can accurately extract relevant skills, achievements, and company history
 - Network effect increases as more users contribute ally type definitions and connection data
-- Claude 3 Sonnet (Anthropic API) provides sufficient quality for counter-query and bridge pitch generation across different professional domains with superior reasoning compared to local models
+- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929 via Anthropic API) provides sufficient quality for counter-query and bridge pitch generation across different professional domains with superior reasoning compared to previous models (Constitution v2.1.0 requirement)
 - Users prefer web-based interface over command-line tools for this type of discovery work
 
 ## Dependencies
 
-- External APIs: GitHub API, X/Twitter API, Apollo API, public LinkedIn endpoints, Anthropic API (Claude 3 Sonnet)
-- AI/ML Services: Claude 3 Sonnet via Anthropic API for LLM reasoning, HuggingFace embeddings for semantic search (sentence-transformers/all-MiniLM-L6-v2), resume parsing libraries
+- External APIs: GitHub API, X/Twitter API, Apollo API, public LinkedIn endpoints, Anthropic API (Claude Sonnet 4.5)
+- AI/ML Services: Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) via Anthropic API for LLM reasoning, HuggingFace embeddings for semantic search (sentence-transformers/all-MiniLM-L6-v2), resume parsing libraries
 - Infrastructure: FAISS vector database for search indexing, Next.js for web interface, PostgreSQL for data storage, file storage for resume documents
 - User-provided data: Resume documents, ally type definitions, API keys (GitHub, Apollo, Anthropic), existing network contacts
 - Document Processing: PDF/Word parsing capabilities (PyPDF2, python-docx), text extraction and NLP for resume analysis

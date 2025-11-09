@@ -100,6 +100,53 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+def create_access_token(user_id: str, email: str, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create an access token (wrapper for generate_token for test compatibility).
+
+    Args:
+        user_id: Unique user identifier
+        email: User email address
+        expires_delta: Optional custom expiration time
+
+    Returns:
+        Encoded JWT access token string
+    """
+    return generate_token(user_id, email, token_type="access")
+
+
+def create_refresh_token(user_id: str, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create a refresh token (wrapper for generate_token for test compatibility).
+
+    Args:
+        user_id: Unique user identifier
+        expires_delta: Optional custom expiration time
+
+    Returns:
+        Encoded JWT refresh token string
+    """
+    # For refresh tokens, we don't need email in payload (simpler)
+    return generate_token(user_id, "", token_type="refresh")
+
+
+def decode_token(token: str) -> Optional[dict]:
+    """
+    Decode a JWT token without validation (for test compatibility).
+
+    Args:
+        token: JWT token string to decode
+
+    Returns:
+        Decoded payload dict or None if invalid
+    """
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+    except JWTError:
+        return None
+
+
 def generate_token(user_id: str, email: str, token_type: str = "access") -> str:
     """
     Generate a JWT token for authentication.

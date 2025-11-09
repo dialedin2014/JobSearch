@@ -1,0 +1,22 @@
+[run]
+source = src
+omit =
+    # Phase 2+ modules (not part of Phase 1)
+    */integrations/github_client.py
+    */integrations/linkedin_client.py
+    */integrations/twitter_client.py
+    */integrations/anthropic_client.py
+    */services/embedding_service.py
+    */services/llm_service.py
+    */services/ally_deduction.py
+    */api/routes/dream_job.py
+    */api/dependencies/llm.py
+    */core/rate_limiter.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov

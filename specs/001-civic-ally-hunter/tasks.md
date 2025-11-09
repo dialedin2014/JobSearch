@@ -13,46 +13,58 @@
 
 ---
 
-## Phase 1: Foundation & Resume Processing (23 tasks) - Weeks 1-3
+## Phase 1: Foundation & Resume Processing (30 tasks) - Weeks 1-3
 
-**Goal**: P1 MVP Core - Profile Setup and Ally Type Configuration (includes authentication)
+**Goal**: P1 MVP Core - Profile Setup and Ally Type Configuration (includes authentication + automated tests)
 
 ### Project Setup (5 tasks)
 
-- [X] T001 [P] Initialize Dev Container: .devcontainer/devcontainer.json with Python 3.12, Node.js 18, PostgreSQL 15
-- [X] T002 [P] Create backend/requirements.txt: FastAPI 0.104.1, anthropic 0.8.1, langchain 0.1.0, faiss-cpu 1.7.4, sentence-transformers 2.2.2, PyPDF2 3.0.1, python-docx 1.1.0, httpx 0.25.2, circuitbreaker 1.4.0, tenacity 8.2.3, NetworkX 3.2.0, SQLAlchemy 2.0.23, Alembic 1.13.1, redis 5.0.1, hiredis 2.2.3, pytest 7.4.3, pylint 3.0.3, bcrypt 4.1.2, python-jose 3.3.0
-- [X] T003 [P] Create frontend/package.json: Next.js 14.0.4, React 18, TypeScript 5.3.3, D3.js 7.8+, Tailwind CSS 3.3.6
-- [X] T004 [P] Setup FastAPI application scaffold: backend/src/main.py with CORS, health check endpoint, OpenAPI docs
-- [X] T005 [P] Create backend/.env.example: ANTHROPIC_API_KEY, GITHUB_API_TOKEN, TWITTER_API_KEY, APOLLO_API_KEY, DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY, JWT_ALGORITHM, environment variables with documentation
+- [x] T001 [P] Initialize Dev Container: .devcontainer/devcontainer.json with Python 3.12, Node.js 18, PostgreSQL 15
+- [x] T002 [P] Create backend/requirements.txt: FastAPI 0.104.1, anthropic 0.8.1, langchain 0.1.0, faiss-cpu 1.7.4, sentence-transformers 2.2.2, PyPDF2 3.0.1, python-docx 1.1.0, httpx 0.25.2, circuitbreaker 1.4.0, tenacity 8.2.3, NetworkX 3.2.0, SQLAlchemy 2.0.23, Alembic 1.13.1, redis 5.0.1, hiredis 2.2.3, pytest 7.4.3, pylint 3.0.3, bcrypt 4.1.2, python-jose 3.3.0
+- [x] T003 [P] Create frontend/package.json: Next.js 14.0.4, React 18, TypeScript 5.3.3, D3.js 7.8+, Tailwind CSS 3.3.6
+- [x] T004 [P] Setup FastAPI application scaffold: backend/src/main.py with CORS, health check endpoint, OpenAPI docs
+- [x] T005 [P] Create backend/.env.example: ANTHROPIC_API_KEY, GITHUB_API_TOKEN, TWITTER_API_KEY, APOLLO_API_KEY, DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY, JWT_ALGORITHM, environment variables with documentation
 
 ### Authentication & Security (3 tasks)
 
-- [X] T006 [S] [US1] Create backend/src/core/security.py: JWT authentication with HTTPBearer scheme, generate_token(user_id), validate_token(token), hash_password(password) with bcrypt, verify_password(plain, hashed)
-- [X] T007 [P] [US1] Create backend/src/api/routes/auth.py: POST /auth/register (email, password) creates UserProfile, POST /auth/login returns JWT token, POST /auth/refresh refreshes token, GET /auth/me returns current user
-- [X] T008 [P] [US1] Add authentication middleware: protect all routes except /auth/*, /health, /docs, extract user_id from JWT, inject into request.state.user_id
+- [x] T006 [S] [US1] Create backend/src/core/security.py: JWT authentication with HTTPBearer scheme, generate_token(user_id), validate_token(token), hash_password(password) with bcrypt, verify_password(plain, hashed)
+- [x] T007 [P] [US1] Create backend/src/api/routes/auth.py: POST /auth/register (email, password) creates UserProfile, POST /auth/login returns JWT token, POST /auth/refresh refreshes token, GET /auth/me returns current user
+- [x] T008 [P] [US1] Add authentication middleware: protect all routes except /auth/\*, /health, /docs, extract user_id from JWT, inject into request.state.user_id
 
 ### Database Schema (4 tasks)
 
-- [X] T009 [S] Initialize Alembic: alembic init, configure alembic.ini with DATABASE_URL
-- [X] T010 [P] [US1] Create backend/src/models/user_profile.py: UserProfile model (id, user_id, email unique indexed, password_hash, resume_file_path, parsed_resume_id FK, created_at, updated_at)
-- [X] T011 [P] [US1] Create backend/src/models/parsed_resume.py: ParsedResume model (id, user_profile_id FK, raw_text, skills JSON, achievements JSON, work_history JSON, education JSON, companies JSON, keywords JSON, parsing_confidence float, parsed_at, parser_version)
-- [X] T012 [P] [US1] Create backend/src/models/ally_type.py: AllyType model (id, user_profile_id FK, name, keywords JSON, criteria Text, search_parameters JSON, created_at, is_active)
+- [x] T009 [S] Initialize Alembic: alembic init, configure alembic.ini with DATABASE_URL
+- [x] T010 [P] [US1] Create backend/src/models/user_profile.py: UserProfile model (id, user_id, email unique indexed, password_hash, resume_file_path, parsed_resume_id FK, created_at, updated_at)
+- [x] T011 [P] [US1] Create backend/src/models/parsed_resume.py: ParsedResume model (id, user_profile_id FK, raw_text, skills JSON, achievements JSON, work_history JSON, education JSON, companies JSON, keywords JSON, parsing_confidence float, parsed_at, parser_version)
+- [x] T012 [P] [US1] Create backend/src/models/ally_type.py: AllyType model (id, user_profile_id FK, name, keywords JSON, criteria Text, search_parameters JSON, created_at, is_active)
 
 ### Resume Upload & Parsing (5 tasks)
 
-- [X] T013 [S] [US1] Create backend/src/api/routes/resume.py: POST /resumes/upload endpoint with multipart/form-data handling, 10MB size limit validation, file extension check (pdf, docx, doc, txt), save to file storage
-- [X] T014 [P] [US1] Create backend/src/services/resume_parser.py: ResumeParser class with extract_text_from_pdf (PyPDF2), extract_text_from_docx (python-docx), extract_text_from_txt, parse_resume method
-- [X] T015 [S] [US1] Implement resume field extraction in resume_parser.py: extract skills (pattern matching + NER fallback), extract achievements (bullet points with metrics), extract work_history (company, title, dates, description), extract education, calculate parsing_confidence (0-1 based on extraction success rate)
-- [X] T016 [S] [US1] Add resume parsing background task: parse_resume_background using FastAPI BackgroundTasks, update ParsedResume record, handle parsing errors with retry logic
-- [X] T017 [S] [US1] Add resume retrieval endpoints: GET /resumes/{id} (return parsed resume), GET /resumes/{id}/status (parsing progress tracking)
+- [x] T013 [S] [US1] Create backend/src/api/routes/resume.py: POST /resumes/upload endpoint with multipart/form-data handling, 10MB size limit validation, file extension check (pdf, docx, doc, txt), save to file storage
+- [x] T014 [P] [US1] Create backend/src/services/resume_parser.py: ResumeParser class with extract_text_from_pdf (PyPDF2), extract_text_from_docx (python-docx), extract_text_from_txt, parse_resume method
+- [x] T015 [S] [US1] Implement resume field extraction in resume_parser.py: extract skills (pattern matching + NER fallback), extract achievements (bullet points with metrics), extract work_history (company, title, dates, description), extract education, calculate parsing_confidence (0-1 based on extraction success rate)
+- [x] T016 [S] [US1] Add resume parsing background task: parse_resume_background using FastAPI BackgroundTasks, update ParsedResume record, handle parsing errors with retry logic
+- [x] T017 [S] [US1] Add resume retrieval endpoints: GET /resumes/{id} (return parsed resume), GET /resumes/{id}/status (parsing progress tracking)
 
 ### Ally Type CRUD (5 tasks)
 
-- [X] T018 [P] [US1] Create backend/src/api/routes/ally_types.py: POST /ally-types endpoint (create with name, keywords JSON, criteria, search_parameters), validate name uniqueness per user
-- [X] T019 [P] [US1] Add GET /ally-types endpoint: list user's ally types with pagination, filter by is_active
-- [X] T020 [P] [US1] Add PUT /ally-types/{id} endpoint: update ally type (name, keywords, criteria), validate ownership
-- [X] T021 [P] [US1] Add DELETE /ally-types/{id} endpoint: soft delete (set is_active=False), cascade to associated contacts
-- [X] T022 [P] [US1] Add GET /ally-types/export, POST /ally-types/import endpoints: export all user's ally types as JSON, import from JSON payload (FR-014 save/load requirement)
+- [x] T018 [P] [US1] Create backend/src/api/routes/ally_types.py: POST /ally-types endpoint (create with name, keywords JSON, criteria, search_parameters), validate name uniqueness per user
+- [x] T019 [P] [US1] Add GET /ally-types endpoint: list user's ally types with pagination, filter by is_active
+- [x] T020 [P] [US1] Add PUT /ally-types/{id} endpoint: update ally type (name, keywords, criteria), validate ownership
+- [x] T021 [P] [US1] Add DELETE /ally-types/{id} endpoint: soft delete (set is_active=False), cascade to associated contacts
+- [x] T022 [P] [US1] Add GET /ally-types/export, POST /ally-types/import endpoints: export all user's ally types as JSON, import from JSON payload (FR-014 save/load requirement)
+
+### Automated Testing (7 tasks)
+
+- [ ] T022a [S] [US1] Create pytest configuration: backend/pytest.ini with coverage settings (--cov=src, --cov-report=html/term-missing), test discovery patterns, markers for unit/integration/auth/resume/ally_type
+- [ ] T022b [P] [US1] Write unit tests for security.py: test_hash_password, test_verify_password, test_generate_token, test_validate_token, test_token_expiration (≥90% coverage target)
+- [ ] T022c [P] [US1] Write unit tests for resume_parser.py: test_extract_text_pdf/docx/txt, test_extract_skills, test_extract_achievements, test_calculate_confidence (≥85% coverage target)
+- [ ] T022d [S] [US1] Write integration tests for auth endpoints: test_register_success/duplicate, test_login_valid/invalid, test_get_me_authenticated/unauthenticated, test_refresh_token (backend/tests/integration/test_auth_api.py)
+- [ ] T022e [S] [US1] Write integration tests for resume endpoints: test_upload_resume_txt/pdf, test_upload_invalid_format, test_get_resume_status, test_get_parsed_resume, test_multi_user_isolation (backend/tests/integration/test_resume_api.py)
+- [ ] T022f [S] [US1] Write integration tests for ally type endpoints: test_create_ally_type, test_list_ally_types_filter, test_update_ally_type, test_delete_soft, test_export_import, test_ownership_validation (backend/tests/integration/test_ally_type_api.py)
+- [ ] T022g [S] [US1] Achieve ≥80% test coverage for Phase 1 code: run pytest --cov=src --cov-report=html, fix uncovered branches, document coverage report in htmlcov/index.html, verify all critical paths tested
+
+**Constitution Principle VI Compliance**: Phase 1 NOT complete until T022a-g are finished and all tests pass. Manual validation alone is insufficient.
 
 ---
 
@@ -103,7 +115,7 @@
 ### LangChain & Claude 3 Sonnet Setup (4 tasks)
 
 - [ ] T045 [P] [US2] Create backend/src/services/llm_service.py: LLMService class with anthropic.Anthropic client initialization, API key from settings.ANTHROPIC_API_KEY
-- [ ] T046 [S] [US2] Implement LLM call wrapper: create_message(prompt, system_message, max_tokens=1024, temperature=0.7) using Claude 3 Sonnet (claude-3-sonnet-20240229), retry with tenacity (3 attempts), track token usage
+- [ ] T046 [S] [US2] Implement LLM call wrapper: create_message(prompt, system_message, max_tokens=1024, temperature=0.7) using Claude Sonnet 4.5 (claude-sonnet-4-5-20250929), retry with tenacity (3 attempts), track token usage
 - [ ] T047 [P] [US2] Add LLM cost tracking: track_api_usage(input_tokens, output_tokens), calculate cost ($3/million input, $15/million output), store in usage logs, per-user quota enforcement
 - [ ] T048 [P] [US2] Implement response caching: cache LLM responses with TTL=24hr, cache key = hash(prompt + system_message + model), reduce API costs by ~70%
 
@@ -210,50 +222,55 @@
 - [ ] T099 [P] Add input validation: sanitize all user inputs (query, ally_type.name, criteria), prevent SQL injection, prevent XSS in markdown export, max length limits
 - [ ] T100 [P] Setup logging: structured logging (JSON format), log levels (DEBUG/INFO/WARNING/ERROR), log API calls, search queries, LLM token usage, errors with stack traces
 - [ ] T101 [P] Setup monitoring: Prometheus metrics (API response times, error rates, cache hit rates, LLM costs), Grafana dashboards, alerting for uptime <99.5% (SC-008)
-- [ ] T102 [P] [US1] Implement resume parsing accuracy testing (SC-004): pytest suite with 100+ sample resumes (PDF/DOCX/TXT from diverse formats/industries), measure skill/achievement/company extraction success rates, validate ≥95% parsing_confidence target, generate test report with failure analysis
+- [ ] T102 [P] Create Phase 2-5 automated tests: pytest tests for search orchestration (Phase 2), LLM service/counter-queries (Phase 3), network mapping (Phase 4), outreach templates (Phase 5), achieve ≥80% coverage per phase
 - [ ] T103 [S] Setup production deployment infrastructure (SC-008): select cloud platform (Heroku/Render/Railway), configure load balancer, auto-scaling (2-10 instances based on CPU/memory), health checks (/health endpoint polling), SSL/TLS certificates, environment variable management, database connection pooling
 - [ ] T104 [P] Create deployment documentation: README.md with setup instructions, .env.example with all variables, Docker Compose for local dev, deployment guide for cloud platforms (Heroku/Render/Railway)
 - [ ] T105 [P] Create database migration guide: Alembic migration scripts for all schema changes, rollback procedures, data migration scripts for existing users (if any)
-- [ ] T106 [P] Final end-to-end testing: complete user journey from registration → resume upload → ally type creation → search → network mapping → outreach generation → export, verify all success criteria (SC-001 through SC-010), load testing with 100+ concurrent users
+- [ ] T106 [P] Final end-to-end testing: complete user journey from registration → resume upload → ally type creation → search → network mapping → outreach generation → export, verify all success criteria (SC-001 through SC-010), load testing with 100+ concurrent users, performance benchmarks
 
 ---
 
 ## Task Summary by Phase
 
-| Phase | Tasks | Focus | Target User Story |
-|-------|-------|-------|-------------------|
-| 1 | 22 (T001-T022) | Foundation, Auth & Resume Processing | US1 (P1) |
-| 2 | 22 (T023-T044) | Multi-Platform Search | US1 (P1) |
-| 3 | 16 (T045-T060) | Shadow Sequence Amplifier | US2 (P2) |
-| 4 | 18 (T061-T078) | Organization Network Mapping | US3 (P3) |
-| 5 | 12 (T079-T090) | Outreach Template Generator | US4 (P4) |
-| 6 | 16 (T091-T106) | Polish, Testing & Production | All |
-| **Total** | **106** | | |
+| Phase     | Tasks           | Focus                                        | Target User Story |
+| --------- | --------------- | -------------------------------------------- | ----------------- |
+| 1         | 30 (T001-T022g) | Foundation, Auth, Resume, Ally Types + Tests | US1 (P1)          |
+| 2         | 22 (T023-T044)  | Multi-Platform Search                        | US1 (P1)          |
+| 3         | 16 (T045-T060)  | Shadow Sequence Amplifier                    | US2 (P2)          |
+| 4         | 18 (T061-T078)  | Organization Network Mapping                 | US3 (P3)          |
+| 5         | 12 (T079-T090)  | Outreach Template Generator                  | US4 (P4)          |
+| 6         | 16 (T091-T106)  | Polish, Testing & Production                 | All               |
+| **Total** | **114**         |                                              |                   |
 
 ## Critical Path
 
 Sequential dependencies (must execute in order):
-1. T001-T005 (setup) → T006-T008 (auth) → T009-T012 (models) → T013-T017 (resume parsing)
+
+1. T001-T005 (setup) → T006-T008 (auth) → T009-T012 (models) → T013-T017 (resume parsing) → T018-T022 (ally types) → **T022a-T022g (automated tests - required before Phase 2)**
 2. T023-T029 (API clients + models) → T037-T043 (search orchestration)
 3. T044-T047 (LLM setup) → T048-T052 (counter-queries) → T053-T059 (bridge pitches)
 4. T060-T064 (org data) → T065-T070 (network graph) → T071-T077 (visualization)
 5. T078-T083 (outreach templates) → T084-T089 (export)
-6. T090-T103 (production readiness, testing, deployment)
+6. T090-T106 (production readiness, integration/E2E testing, deployment)
+
+**Constitution Principle VI**: Each phase MUST complete automated tests before proceeding to next phase.
 
 **Parallelizable**: Within each phase, [P] tasks can run simultaneously across multiple developers.
 
 ## Success Criteria Mapping
 
-| SC | Description | Tasks |
-|----|-------------|-------|
-| SC-001 | Upload + define ally types <5min | T001-T022, T090-T092 |
-| SC-002 | Search results <30s | T037-T043, T094-T096 |
-| SC-003 | Relevance ≥80% | T038-T039, T093 |
-| SC-004 | Resume parsing ≥95% | T014-T016, T101 |
-| SC-005 | Bridge pitch resume refs 100% | T057-T058 |
-| SC-006 | Network connections ≥60% | T066-T070, T073-T074 |
-| SC-007 | Multi-platform indexing 100% | T023-T026, T037-T043 |
-| SC-008 | Uptime ≥99.5% | T097-T103 |
-| SC-009 | Export <10s for 50 results | T084-T089 |
-| SC-010 | Counter-query quality ≥90% | T049-T050 |
-| FR-015 | Secure authentication | T006-T008 |
+| SC     | Description                      | Tasks                  |
+| ------ | -------------------------------- | ---------------------- |
+| SC-001 | Upload + define ally types <5min | T001-T022, T090-T092   |
+| SC-002 | Search results <30s              | T037-T043, T094-T096   |
+| SC-003 | Relevance ≥80%                   | T038-T039, T093        |
+| SC-004 | Resume parsing ≥95%              | T014-T016, T022c, T102 |
+| SC-005 | Bridge pitch resume refs 100%    | T057-T058, T059        |
+| SC-006 | Network connections ≥60%         | T066-T070, T073-T074   |
+| SC-007 | Multi-platform indexing 100%     | T023-T026, T037-T043   |
+| SC-008 | Uptime ≥99.5%                    | T097-T103              |
+| SC-009 | Export <10s for 50 results       | T084-T089              |
+| SC-010 | Counter-query quality ≥90%       | T049-T050              |
+| FR-015 | Secure authentication            | T006-T008, T022d       |
+
+**Note**: Constitution v2.1.0 Principle VI requires automated tests for all phases. Phase 1 tests are T022a-T022g.
