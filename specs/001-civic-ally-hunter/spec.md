@@ -130,20 +130,20 @@ A user generates highly personalized outreach messages that reference specific r
 
 ## Assumptions
 
-- Users have access to required API keys (GitHub PAT, Apollo API key) for enhanced functionality
+- Users have access to required API keys (GitHub PAT, Apollo API key, Anthropic API key) for enhanced functionality
 - Public LinkedIn data collection remains within platform terms of service limits
 - Users will provide resume documents in standard formats (PDF, Word, plain text) for parsing
 - Users can clearly define their target ally types with appropriate keywords and criteria
 - Professionals across various industries value diverse perspectives and are open to collaborative approaches
 - Resume parsing technology can accurately extract relevant skills, achievements, and company history
 - Network effect increases as more users contribute ally type definitions and connection data
-- Local LLM (Ollama with Llama3) provides sufficient quality for counter-query and bridge pitch generation across different professional domains
+- Claude 3 Sonnet (Anthropic API) provides sufficient quality for counter-query and bridge pitch generation across different professional domains with superior reasoning compared to local models
 - Users prefer web-based interface over command-line tools for this type of discovery work
 
 ## Dependencies
 
-- External APIs: GitHub API, X/Twitter API, Apollo API, public LinkedIn endpoints
-- AI/ML Services: Local LLM via Ollama, HuggingFace embeddings for semantic search, resume parsing libraries
-- Infrastructure: FAISS vector database for search indexing, Streamlit for web interface, file storage for resume documents
-- User-provided data: Resume documents, ally type definitions, API keys, existing network contacts
-- Document Processing: PDF/Word parsing capabilities, text extraction and NLP for resume analysis
+- External APIs: GitHub API, X/Twitter API, Apollo API, public LinkedIn endpoints, Anthropic API (Claude 3 Sonnet)
+- AI/ML Services: Claude 3 Sonnet via Anthropic API for LLM reasoning, HuggingFace embeddings for semantic search (sentence-transformers/all-MiniLM-L6-v2), resume parsing libraries
+- Infrastructure: FAISS vector database for search indexing, Next.js for web interface, PostgreSQL for data storage, file storage for resume documents
+- User-provided data: Resume documents, ally type definitions, API keys (GitHub, Apollo, Anthropic), existing network contacts
+- Document Processing: PDF/Word parsing capabilities (PyPDF2, python-docx), text extraction and NLP for resume analysis

@@ -1,0 +1,38 @@
+[MASTER]
+# Python version to target
+py-version=3.12
+
+# Files or directories to be skipped
+ignore=migrations,alembic,tests,__pycache__
+
+[MESSAGES CONTROL]
+# Disable specific messages
+disable=
+    C0111,  # missing-docstring
+    C0103,  # invalid-name
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    W0212,  # protected-access
+    W0511,  # fixme
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=100
+
+# String used for indentation
+indent-string='    '
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=10
+
+# Maximum number of attributes for a class
+max-attributes=15
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,ex,Run,_,id,db
+
+[IMPORTS]
+# Allow wildcard imports from typing
+allow-wildcard-with-all=yes

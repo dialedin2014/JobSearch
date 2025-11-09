@@ -30,18 +30,18 @@ description: "Task list for Dream Job Ally Deduction feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create backend directory structure: backend/src/{models,services,api,core,integrations}
-- [ ] T002 Create frontend directory structure: frontend/src/{components,pages,services,utils}
-- [ ] T003 Create test directories: backend/tests/{contract,integration,unit} and frontend/tests/components
-- [ ] T004 Configure .devcontainer/devcontainer.json with Python 3.12, Node.js 18+, PostgreSQL service
-- [ ] T005 Create backend/requirements.txt with pinned versions: fastapi==0.104.1, anthropic==0.8.1, langchain==0.1.0, langchain-community==0.1.0, faiss-cpu==1.7.4, sentence-transformers==2.2.2, PyPDF2==3.0.1, pdfplumber==0.10.3, python-docx==1.1.0, httpx==0.25.2, sqlalchemy==2.0.23, alembic==1.13.1, psycopg2-binary==2.9.9, pydantic==2.5.2, pytest==7.4.3, pytest-asyncio==0.21.1, pylint==3.0.3
-- [ ] T006 Create frontend/package.json with dependencies: next@14, react@18, typescript@5, axios, tailwindcss
-- [ ] T007 [P] Configure .devcontainer/docker-compose.yml with app and postgres services
-- [ ] T008 [P] Create backend/.env.example with ANTHROPIC_API_KEY, DATABASE_URL, GITHUB_API_TOKEN placeholders
-- [ ] T009 [P] Setup Alembic in backend/alembic/ with initial migration configuration
-- [ ] T010 [P] Create backend/src/main.py with FastAPI app initialization, CORS middleware, and router includes
-- [ ] T011 [P] Create frontend/next.config.js with API proxy configuration for backend
-- [ ] T012 [P] Configure pylint in backend/.pylintrc and pytest in backend/pytest.ini
+- [X] T001 Create backend directory structure: backend/src/{models,services,api,core,integrations}
+- [X] T002 Create frontend directory structure: frontend/src/{components,pages,services,utils}
+- [X] T003 Create test directories: backend/tests/{contract,integration,unit} and frontend/tests/components
+- [X] T004 Configure .devcontainer/devcontainer.json with Python 3.12, Node.js 18+, PostgreSQL service
+- [X] T005 Create backend/requirements.txt with pinned versions: fastapi==0.104.1, anthropic==0.8.1, langchain==0.1.0, langchain-community==0.1.0, faiss-cpu==1.7.4, sentence-transformers==2.2.2, PyPDF2==3.0.1, pdfplumber==0.10.3, python-docx==1.1.0, httpx==0.25.2, sqlalchemy==2.0.23, alembic==1.13.1, psycopg2-binary==2.9.9, pydantic==2.5.2, pytest==7.4.3, pytest-asyncio==0.21.1, pylint==3.0.3
+- [X] T006 Create frontend/package.json with dependencies: next@14, react@18, typescript@5, axios, tailwindcss
+- [X] T007 [P] Configure .devcontainer/docker-compose.yml with app and postgres services
+- [X] T008 [P] Create backend/.env.example with ANTHROPIC_API_KEY, DATABASE_URL, GITHUB_API_TOKEN placeholders
+- [X] T009 [P] Setup Alembic in backend/alembic/ with initial migration configuration
+- [X] T010 [P] Create backend/src/main.py with FastAPI app initialization, CORS middleware, and router includes
+- [X] T011 [P] Create frontend/next.config.js with API proxy configuration for backend
+- [X] T012 [P] Configure pylint in backend/.pylintrc and pytest in backend/pytest.ini
 
 ---
 
@@ -51,18 +51,18 @@ description: "Task list for Dream Job Ally Deduction feature implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T013 Create backend/src/core/config.py with Pydantic Settings for environment variables (ANTHROPIC_API_KEY, DATABASE_URL, etc.)
-- [ ] T014 [P] Create backend/src/core/database.py with SQLAlchemy engine, SessionLocal, and Base initialization
-- [ ] T015 [P] Create backend/src/core/rate_limiter.py with token bucket rate limiter class for API throttling
-- [ ] T016 [P] Create backend/src/core/security.py with authentication helpers and user context management
-- [ ] T017 Create backend/src/integrations/anthropic_client.py with Claude 3 Sonnet client wrapper, rate limiting, error handling, and retry logic using tenacity
-- [ ] T018 [P] Create backend/src/integrations/github_client.py with httpx async client, circuit breaker pattern, and rate limiting (5000 req/hour)
-- [ ] T019 [P] Create backend/src/integrations/twitter_client.py with httpx async client, circuit breaker pattern, and rate limiting (100-300 req/15min)
-- [ ] T020 [P] Create backend/src/integrations/linkedin_client.py with httpx async client and rate-friendly scraping approach
-- [ ] T021 Create backend/src/api/dependencies/llm.py with dependency injection for Claude client (get_llm_service)
-- [ ] T022 [P] Create backend/src/api/dependencies/auth.py with get_current_user dependency
-- [ ] T023 Setup HuggingFace embeddings in backend/src/services/embedding_service.py using sentence-transformers/all-MiniLM-L6-v2
-- [ ] T024 [P] Create frontend/src/services/api.ts with axios client, base URL configuration, and error handling
+- [X] T013 Create backend/src/core/config.py with Pydantic Settings for environment variables (ANTHROPIC_API_KEY, DATABASE_URL, etc.)
+- [X] T014 [P] Create backend/src/core/database.py with SQLAlchemy engine, SessionLocal, and Base initialization
+- [X] T015 [P] Create backend/src/core/rate_limiter.py with token bucket rate limiter class for API throttling
+- [X] T016 [P] Create backend/src/core/security.py with authentication helpers and user context management
+- [X] T017 Create backend/src/integrations/anthropic_client.py with Claude 3 Sonnet client wrapper, rate limiting, error handling, and retry logic using tenacity
+- [X] T018 [P] Create backend/src/integrations/github_client.py with httpx async client, circuit breaker pattern, and rate limiting (5000 req/hour)
+- [X] T019 [P] Create backend/src/integrations/twitter_client.py with httpx async client, circuit breaker pattern, and rate limiting (100-300 req/15min)
+- [X] T020 [P] Create backend/src/integrations/linkedin_client.py with httpx async client and rate-friendly scraping approach
+- [X] T021 Create backend/src/api/dependencies/llm.py with dependency injection for Claude client (get_llm_service)
+- [X] T022 [P] Create backend/src/api/dependencies/auth.py with get_current_user dependency
+- [X] T023 Setup HuggingFace embeddings in backend/src/services/embedding_service.py using sentence-transformers/all-MiniLM-L6-v2
+- [X] T024 [P] Create frontend/src/services/api.ts with axios client, base URL configuration, and error handling
 - [ ] T025 Run Alembic initial migration to create database schema: alembic revision --autogenerate -m "Initial schema"
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
@@ -79,37 +79,37 @@ description: "Task list for Dream Job Ally Deduction feature implementation"
 
 ### Backend Models (US1)
 
-- [ ] T026 [P] [US1] Create backend/src/models/user_profile.py with SQLAlchemy model: id, user_id, email, resume_file_path, resume_file_name, resume_file_size, resume_upload_date, parsed_resume_id, created_at, updated_at
-- [ ] T027 [P] [US1] Create backend/src/models/resume.py with ParsedResume model: id, user_id, raw_text, skills (JSON), experience_years, job_titles (JSON), companies (JSON), education (JSON), achievements (JSON), career_timeline (JSON), current_role, current_company, parsing_confidence, parsed_at, parser_version
-- [ ] T028 [P] [US1] Create backend/src/models/dream_job.py with DreamJobDescription model: id, user_id, description, version, desired_role, desired_industry, desired_company_type, required_skills (JSON), responsibilities (JSON), created_at, is_active, previous_version_id
-- [ ] T029 [P] [US1] Create backend/src/models/ally_type.py with DeducedAllyType model: id, dream_job_id, ally_type_name, confidence_score, selection_rationale, search_queries (JSON), engagement_strategy, rank, created_at, llm_model, llm_prompt_version
+- [X] T026 [P] [US1] Create backend/src/models/user_profile.py with SQLAlchemy model: id, user_id, email, resume_file_path, resume_file_name, resume_file_size, resume_upload_date, parsed_resume_id, created_at, updated_at
+- [X] T027 [P] [US1] Create backend/src/models/resume.py with ParsedResume model: id, user_id, raw_text, skills (JSON), experience_years, job_titles (JSON), companies (JSON), education (JSON), achievements (JSON), career_timeline (JSON), current_role, current_company, parsing_confidence, parsed_at, parser_version
+- [X] T028 [P] [US1] Create backend/src/models/dream_job.py with DreamJobDescription model: id, user_id, description, version, desired_role, desired_industry, desired_company_type, required_skills (JSON), responsibilities (JSON), created_at, is_active, previous_version_id
+- [X] T029 [P] [US1] Create backend/src/models/ally_type.py with DeducedAllyType model: id, dream_job_id, ally_type_name, confidence_score, selection_rationale, search_queries (JSON), engagement_strategy, rank, created_at, llm_model, llm_prompt_version
 
 ### Backend Services (US1)
 
-- [ ] T030 [US1] Create backend/src/services/resume_parser.py with extract_text_from_pdf() using PyPDF2 with pdfplumber fallback, extract_text_from_docx() using python-docx, and parse_resume() returning structured ParsedResume data
-- [ ] T031 [US1] Create backend/src/services/llm_service.py with LLMService class: deduce_ally_types(resume_text, dream_job_text) method calling Claude 3 Sonnet with structured prompt, chain-of-thought reasoning, JSON output parsing for ally types with confidence scores
-- [ ] T032 [US1] Create backend/src/services/ally_deduction.py with AllyDeductionService: analyze_resume_and_dream_job() orchestrating resume parsing, LLM deduction, validation (confidence >0.5), and database persistence
-- [ ] T033 [US1] Implement LLM prompt template in backend/src/services/llm_service.py: ALLY_DEDUCTION_PROMPT with few-shot examples (Software Engineer→Product Manager, Backend→DevOps, Junior→Senior), structured JSON output format
-- [ ] T034 [US1] Add error handling to backend/src/services/resume_parser.py for parsing failures: detect low confidence (<0.5), generate LLM-based clarification questions (FR-003a), return user-friendly error messages
+- [X] T030 [US1] Create backend/src/services/resume_parser.py with extract_text_from_pdf() using PyPDF2 with pdfplumber fallback, extract_text_from_docx() using python-docx, and parse_resume() returning structured ParsedResume data
+- [X] T031 [US1] Create backend/src/services/llm_service.py with LLMService class: deduce_ally_types(resume_text, dream_job_text) method calling Claude 3 Sonnet with structured prompt, chain-of-thought reasoning, JSON output parsing for ally types with confidence scores
+- [X] T032 [US1] Create backend/src/services/ally_deduction.py with AllyDeductionService: analyze_resume_and_dream_job() orchestrating resume parsing, LLM deduction, validation (confidence >0.5), and database persistence
+- [X] T033 [US1] Implement LLM prompt template in backend/src/services/llm_service.py: ALLY_DEDUCTION_PROMPT with few-shot examples (Software Engineer→Product Manager, Backend→DevOps, Junior→Senior), structured JSON output format
+- [X] T034 [US1] Add error handling to backend/src/services/resume_parser.py for parsing failures: detect low confidence (<0.5), generate LLM-based clarification questions (FR-003a), return user-friendly error messages
 
 ### Backend API Routes (US1)
 
-- [ ] T035 [US1] Create backend/src/api/routes/resume.py with POST /api/v1/resumes/upload endpoint: accept multipart file upload, validate format (PDF/DOCX/TXT), validate size (≤10MB), save file, start async parsing task, return 202 with resume_id
-- [ ] T036 [US1] Add GET /api/v1/resumes/{resume_id}/status endpoint in backend/src/api/routes/resume.py: return parsing status (uploaded/parsing/parsed_success/parsing_failed) and progress percentage
-- [ ] T037 [US1] Add GET /api/v1/resumes/{resume_id} endpoint in backend/src/api/routes/resume.py: return ParsedResume data with skills, experience, job titles, companies, education, career timeline
-- [ ] T038 [US1] Create backend/src/api/routes/dream_job.py with POST /api/v1/dream-jobs endpoint: validate description length (≥50 chars), create DreamJobDescription record, set version=1 and is_active=true
-- [ ] T039 [US1] Add GET /api/v1/dream-jobs/{dream_job_id} endpoint in backend/src/api/routes/dream_job.py: return DreamJobDescription with all fields
-- [ ] T040 [US1] Create backend/src/api/routes/ally_types.py with POST /api/v1/ally-deduction/analyze endpoint: accept resume_id + dream_job_description, start async analysis task (background), return 202 with analysis_id
-- [ ] T041 [US1] Add GET /api/v1/ally-deduction/{analysis_id}/status endpoint in backend/src/api/routes/ally_types.py: return analysis status (queued/processing/completed/failed) and progress
-- [ ] T042 [US1] Add GET /api/v1/ally-deduction/{analysis_id}/results endpoint in backend/src/api/routes/ally_types.py: return DeducedAllyType array with confidence scores, rationales, search queries, filtered by min_confidence query param (default 0.5)
+- [X] T035 [US1] Create backend/src/api/routes/resume.py with POST /api/v1/resumes/upload endpoint: accept multipart file upload, validate format (PDF/DOCX/TXT), validate size (≤10MB), save file, start async parsing task, return 202 with resume_id
+- [X] T036 [US1] Add GET /api/v1/resumes/{resume_id}/status endpoint in backend/src/api/routes/resume.py: return parsing status (uploaded/parsing/parsed_success/parsing_failed) and progress percentage
+- [X] T037 [US1] Add GET /api/v1/resumes/{resume_id} endpoint in backend/src/api/routes/resume.py: return ParsedResume data with skills, experience, job titles, companies, education, career timeline
+- [X] T038 [US1] Create backend/src/api/routes/dream_job.py with POST /api/v1/dream-jobs endpoint: validate description length (≥50 chars), create DreamJobDescription record, set version=1 and is_active=true
+- [X] T039 [US1] Add GET /api/v1/dream-jobs/{dream_job_id} endpoint in backend/src/api/routes/dream_job.py: return DreamJobDescription with all fields
+- [X] T040 [US1] Create backend/src/api/routes/ally_types.py with POST /api/v1/ally-deduction/analyze endpoint: accept resume_id + dream_job_description, start async analysis task (background), return 202 with analysis_id
+- [X] T041 [US1] Add GET /api/v1/ally-deduction/{analysis_id}/status endpoint in backend/src/api/routes/ally_types.py: return analysis status (queued/processing/completed/failed) and progress
+- [X] T042 [US1] Add GET /api/v1/ally-deduction/{analysis_id}/results endpoint in backend/src/api/routes/ally_types.py: return DeducedAllyType array with confidence scores, rationales, search queries, filtered by min_confidence query param (default 0.5)
 
 ### Frontend Components (US1)
 
-- [ ] T043 [P] [US1] Create frontend/src/components/ResumeUpload.tsx: file input, drag-drop zone, format validation (PDF/DOCX/TXT), size validation (≤10MB), upload progress bar, POST to /api/v1/resumes/upload
-- [ ] T044 [P] [US1] Create frontend/src/components/DreamJobForm.tsx: textarea input (min 50 chars), character counter, validation messages, submit to POST /api/v1/dream-jobs
-- [ ] T045 [P] [US1] Create frontend/src/components/AllyTypesList.tsx: display ally types with name, confidence score (0-1 as percentage), rationale, search queries (GitHub/Twitter/LinkedIn), engagement strategy, sortable by confidence
-- [ ] T046 [US1] Create frontend/src/pages/analysis.tsx: page layout with ResumeUpload, DreamJobForm, trigger analyze button, WebSocket or polling for status updates, display AllyTypesList when analysis_id status=completed
-- [ ] T047 [US1] Add status polling logic to frontend/src/services/api.ts: pollAnalysisStatus(analysis_id) with 2s intervals, max 60s timeout, abort on completed/failed
+- [X] T043 [P] [US1] Create frontend/src/components/ResumeUpload.tsx: file input, drag-drop zone, format validation (PDF/DOCX/TXT), size validation (≤10MB), upload progress bar, POST to /api/v1/resumes/upload
+- [X] T044 [P] [US1] Create frontend/src/components/DreamJobForm.tsx: textarea input (min 50 chars), character counter, validation messages, submit to POST /api/v1/dream-jobs
+- [X] T045 [P] [US1] Create frontend/src/components/AllyTypesList.tsx: display ally types with name, confidence score (0-1 as percentage), rationale, search queries (GitHub/Twitter/LinkedIn), engagement strategy, sortable by confidence
+- [X] T046 [US1] Create frontend/src/pages/analysis.tsx: page layout with ResumeUpload, DreamJobForm, trigger analyze button, WebSocket or polling for status updates, display AllyTypesList when analysis_id status=completed
+- [X] T047 [US1] Add status polling logic to frontend/src/services/api.ts: pollAnalysisStatus(analysis_id) with 2s intervals, max 60s timeout, abort on completed/failed
 
 ### Integration & Optimization (US1)
 

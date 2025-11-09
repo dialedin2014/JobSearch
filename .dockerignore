@@ -1,0 +1,80 @@
+# Git
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.next/
+out/
+dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+.nyc_output/
+*.test.js
+*.test.tsx
+*.spec.js
+*.spec.tsx
+
+# Documentation
+*.md
+!README.md
+docs/
+specs/
+
+# Logs
+*.log
+logs/
+
+# Database (local dev only)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (should be in S3/external storage in prod)
+uploads/
+
+# Temporary
+*.tmp
+*.temp
+.cache/
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
