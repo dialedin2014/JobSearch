@@ -11,11 +11,24 @@
 ✅ **III. Container-Native Development**: Dev Container with Python 3.12, pinned dependencies  
 ✅ **IV. Priority-Driven Feature Development**: P1-P4 user stories with acceptance scenarios  
 ✅ **V. API Rate Limiting & Resilience**: Circuit breakers, exponential backoff, caching for all external APIs  
-⚠️ **VI. Test-Driven Phase Completion**: Phase 1 code complete but automated tests required before proceeding to Phase 2
+✅ **VI. Test-Driven Phase Completion**: Phase 1 complete with 85.11% test coverage and 89 passing tests (Constitution v2.1.0 Principle VI satisfied)
 
 ⚠️ **Constitution Update**: Constitution v2.1.0 (November 9, 2025) mandates Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) and requires automated pytest tests before phase completion. This plan updated to reflect new requirements.
 
 ## Architecture Overview
+
+### Terminology Glossary
+
+**See spec.md Terminology Glossary (lines 23-32) for authoritative definitions of all core concepts.** Key terms referenced in this implementation plan:
+
+**See spec.md Terminology Glossary (lines 23-32) for authoritative definitions of all core concepts.** Key terms referenced in this implementation plan:
+
+- **Ally Type**: User-defined professional category (see spec.md)
+- **Counter-Query/Shadow Sequence**: Backend uses "counter-query"; frontend may use "shadow sequence" (see spec.md for full distinction)
+- **Bridge Pitch**: Addresses skeptical concerns from counter-queries (see spec.md)
+- **Outreach Template**: Builds on shared interests from target's content (see spec.md)
+
+**Implementation Notes:**
 
 ### System Components
 
@@ -47,8 +60,8 @@
 │  ┌─────────────────┐  ┌─────────────────┐                  │
 │  │ LangChain RAG   │  │ FAISS Vector DB │                  │
 │  │ Pipeline        │  │ (Resume + Posts) │                  │
-│  │ (Claude 3       │  │                 │                  │
-│  │  Sonnet API)    │  │                 │                  │
+│  │ (Claude Sonnet  │  │                 │                  │
+│  │  4.5 API)       │  │                 │                  │
 │  └─────────────────┘  └─────────────────┘                  │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -92,7 +105,7 @@
 
 - Next.js 14.0+ with React 18
 - TypeScript 5.3+
-- Recharts or D3.js for network visualization
+- D3.js for network visualization
 - Tailwind CSS 3.3+ for styling
 
 **Infrastructure**:
@@ -107,8 +120,12 @@
 - Anthropic API (Claude Sonnet 4.5: claude-sonnet-4-5-20250929)
 - GitHub API v3 (5000 req/hour authenticated)
 - Twitter/X API v2 (300 req/15min basic tier)
-- LinkedIn public endpoints (limited, may require manual URL input)
-- Apollo API (contact enrichment, rate limits TBD)
+- LinkedIn public endpoints (manual URL input primary method, public profile parsing rate-limited to 10 profiles/hour with 5s delays)
+- Apollo API (contact enrichment):
+  - **Free tier**: 50 credits/month (1 credit = 1 contact enrichment), no rate limit specified, 60s cache recommended
+  - **Basic tier** ($49/mo): 1000 credits/month, ~16 req/hour sustained, implement circuit breaker at 20 failures/hour
+  - **Professional tier** ($99/mo): 3000 credits/month, ~100 req/hour sustained
+  - **Implementation**: T026 must implement credit tracking, T044 enrichment should batch requests, cache enrichment_data for 7 days, gracefully degrade if credits exhausted (use GitHub/Twitter data only)
 
 ## Data Model
 
@@ -150,6 +167,12 @@ class ParsedResume(Base):
     parsed_at: datetime
     parser_version: str
 ```
+
+**Implementation Status**:
+
+- **Phase 1 (Current)**: Simplified schema with fields: `id`, `user_id` (FK), `content` (raw text), `filename`, `file_type`, `created_at`. See `backend/src/models/resume.py` for actual implementation.
+- **Phase 2 Enhancement**: Will add structured field extraction (skills, achievements, work_history, education, companies, keywords, parsing_confidence, parser_version) as shown in the full schema above.
+- **Rationale**: Simplified Phase 1 schema allows faster P1 MVP delivery while deferring complex NER/pattern matching to Phase 2 when multi-platform search integration can validate extraction quality.
 
 #### AllyType
 
@@ -261,14 +284,33 @@ class BridgePitch(Base):
     id: UUID (PK)
     user_profile_id: UUID (FK)
     target_contact_id: UUID (FK)
+    template_type: str # "bridge_pitch" | "outreach_template"
     resume_achievements_referenced: List[str] (JSON)
     ally_type_context: str
+    target_concerns: str (Text, nullable) # For bridge pitches
+    target_interests: List[str] (JSON, nullable) # For outreach templates
     generated_message: str (Text)
     collaboration_proposal: str (Text)
     llm_model: str # "claude-sonnet-4-5-20250929"
     llm_prompt_version: str
     created_at: datetime
 ```
+
+**Implementation Note**: Single table with `template_type` discriminator supports both bridge pitches (Phase 3) and outreach templates (Phase 5). Bridge pitches focus on addressing skeptical concerns; outreach templates focus on shared professional interests.
+
+#### SearchResultRating
+
+```python
+class SearchResultRating(Base):
+    id: UUID (PK)
+    search_query_id: UUID (FK → SearchQuery)
+    contact_id: UUID (FK → Contact)
+    rating: int # 1-5 stars (validated range)
+    created_at: datetime
+    # Composite unique constraint on (search_query_id, contact_id)
+```
+
+**Purpose**: Tracks user relevance ratings for search results to measure NFR-011 accuracy (≥80% of results rated ≥4 stars). Created in Phase 2 via T043a. Used by rating endpoints: POST /api/v1/search/results/{contact_id}/rate, GET /api/v1/search/{query_id}/ratings.
 
 ### FAISS Vector Indices
 
@@ -354,6 +396,14 @@ class BridgePitch(Base):
 
 **User Story 2 Support**: Counter-query generation + bridge pitches
 
+**Matching Algorithm Specification (FR-009)**:
+
+- Resume-to-Ally matching uses cosine similarity between resume embedding (384-dim vector from sentence-transformers) and contact content embeddings
+- **Threshold**: Similarity score ≥0.6 required for match
+- **Match Score Calculation**: `match_score = cosine_similarity(resume_vector, content_vector)` where score ∈ [0, 1]
+- **Storage**: Store match_score in Contact.profile_data JSON as `{"resume_match_score": 0.75, "matched_achievements": [...], "matched_skills": [...]}`
+- **Ranking**: Sort contacts by match_score descending; filter results to show only matches ≥0.6
+
 **Tasks**:
 
 1. LangChain setup:
@@ -407,6 +457,7 @@ class BridgePitch(Base):
    - Match user's companies to target contact's companies
    - Identify alumni networks, investor overlaps, acquisition paths
    - Store in NetworkConnection table
+   - **Connection Strength Formula**: `connection_strength = (1.0 / path_length) × recency_weight` where `path_length` is the number of hops in the NetworkX shortest path (range: 1-3), and `recency_weight = exp(-years_since_connection / 5.0)` decreases exponentially based on time since the connection was active (e.g., years since user left shared company); final score normalized to [0, 1] range
 4. Network visualization API:
    - GET /network-map (user_id, target_contact_id) → Graph JSON
    - Format: nodes, edges, path metadata
@@ -526,7 +577,11 @@ POST   /api/v1/ally-types/import       # Import ally types from JSON
 POST   /api/v1/search                  # Execute search with ally filters
 GET    /api/v1/search/{query_id}       # Get search results (paginated)
 POST   /api/v1/search/counter-queries  # Generate shadow sequences
+POST   /api/v1/search/results/{result_id}/rate  # Rate search result relevance (1-5 stars)
+GET    /api/v1/search/{query_id}/ratings       # Get relevance rating statistics
 ```
+
+**Rating Mechanism (SC-003)**: Users rate top 5 results per search query on 1-5 star scale. Relevance accuracy = % of results rated ≥4 stars. Target: ≥80% of results rated 4-5 stars. Ratings stored in SearchResultRating table (search_query_id FK, contact_id FK, rating int, created_at).
 
 #### Shadow Sequence & Bridge Pitches
 
@@ -567,7 +622,7 @@ GET    /api/v1/export/outreach-templates     # Export all templates
 | ------------------------------------------------- | ---------- | ------ | ----------------------------------------------------------------------------------------------- |
 | LinkedIn API rate limits                          | High       | High   | Implement aggressive caching, fallback to manual URL input, use Apollo API for enrichment       |
 | Resume parsing accuracy <95%                      | Medium     | Medium | Multi-parser strategy (PyPDF2 → pdfplumber fallback), confidence scoring, manual review option  |
-| Claude 3 Sonnet API costs exceed budget           | Medium     | Medium | Implement response caching (24hr TTL), prompt optimization, usage caps per user                 |
+| Claude Sonnet 4.5 API costs exceed budget         | Medium     | Medium | Implement response caching (24hr TTL), prompt optimization, usage caps per user                 |
 | FAISS index performance degrades at scale         | Low        | Medium | Implement index sharding by user, periodic index optimization, consider Pinecone for production |
 | Network mapping finds no connections (>40% cases) | Medium     | Low    | Provide alternative strategies (events, associations), expand org data sources                  |
 | Counter-query quality <90%                        | Medium     | Medium | Implement quality scoring, LLM prompt refinement, manual review option                          |

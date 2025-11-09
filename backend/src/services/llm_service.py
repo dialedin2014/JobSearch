@@ -68,7 +68,7 @@ ALLY_DEDUCTION_PROMPT = """You are an expert career advisor analyzing a professi
 class LLMService:
     """
     Service for LLM operations using Claude 3 Sonnet.
-    
+
     Provides high-level methods for ally type deduction and other
     LLM-powered features.
     """
@@ -83,14 +83,14 @@ class LLMService:
     ) -> List[Dict[str, Any]]:
         """
         Deduce professional ally types from resume and dream job.
-        
+
         Args:
             resume_text: Full resume text or summary
             dream_job_text: Dream job description
-            
+
         Returns:
             List of ally type dictionaries with confidence scores and metadata
-            
+
         Raises:
             ValueError: If LLM response cannot be parsed
         """
@@ -113,7 +113,7 @@ class LLMService:
 
             # Parse JSON response
             content = response["content"].strip()
-            
+
             # Remove markdown code blocks if present
             if content.startswith("```json"):
                 content = content[7:]
@@ -143,7 +143,8 @@ class LLMService:
 
                 # Add metadata
                 ally["rank"] = i + 1
-                ally["llm_model"] = response.get("model", "claude-3-sonnet-20240229")
+                ally["llm_model"] = response.get(
+                    "model", "claude-sonnet-4-5-20250929")
                 ally["llm_prompt_version"] = self.prompt_version
 
                 # Ensure engagement_strategy exists
@@ -152,7 +153,8 @@ class LLMService:
 
                 validated_ally_types.append(ally)
 
-            logger.info(f"Successfully deduced {len(validated_ally_types)} ally types")
+            logger.info(
+                f"Successfully deduced {len(validated_ally_types)} ally types")
             return validated_ally_types
 
         except json.JSONDecodeError as e:
@@ -168,11 +170,11 @@ class LLMService:
     ) -> List[str]:
         """
         Generate clarification questions for low-confidence resume parsing.
-        
+
         Args:
             resume_text: Parsed resume text
             parsing_confidence: Confidence score from parser
-            
+
         Returns:
             List of clarification questions for the user
         """

@@ -1,10 +1,12 @@
 """
 Unit tests for security module (password hashing, JWT tokens).
 Constitution Principle VI: Test-Driven Phase Completion
+Target: ≥90% coverage per T022b requirement
 """
 import pytest
-from datetime import timedelta
+from datetime import datetime, timedelta
 from jose import jwt, JWTError
+from fastapi import HTTPException
 
 from src.core.security import (
     hash_password,
@@ -12,8 +14,13 @@ from src.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    generate_token,
+    validate_token,
+    TokenData,
     JWT_SECRET_KEY,
-    JWT_ALGORITHM
+    JWT_ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    REFRESH_TOKEN_EXPIRE_DAYS,
 )
 from src.core.config import settings
 
@@ -184,3 +191,279 @@ class TestJWTTokens:
         )
 
         assert "exp" in payload
+
+
+class TestTokenValidation:
+    """Test JWT token validation with validate_token function."""
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_valid_access_token(self):
+        """Test validating a valid access token."""
+        user_id = "valid-user-123"
+        email = "valid@example.com"
+
+        token = generate_token(user_id, email, token_type="access")
+        token_data = validate_token(token, expected_type="access")
+
+        assert isinstance(token_data, TokenData)
+        assert token_data.user_id == user_id
+        assert token_data.email == email
+        assert token_data.token_type == "access"
+        assert isinstance(token_data.exp, datetime)
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_valid_refresh_token(self):
+        """Test validating a valid refresh token."""
+        user_id = "refresh-user-123"
+        email = "refresh@example.com"
+
+        token = generate_token(user_id, email, token_type="refresh")
+        token_data = validate_token(token, expected_type="refresh")
+
+        assert token_data.user_id == user_id
+        assert token_data.token_type == "refresh"
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_wrong_type(self):
+        """Test that validating token with wrong expected type fails."""
+        user_id = "wrong-type-123"
+        email = "wrong@example.com"
+
+        # Create access token but validate as refresh
+        token = generate_token(user_id, email, token_type="access")
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(token, expected_type="refresh")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid token type" in exc_info.value.detail
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_invalid_signature(self):
+        """Test validating token with invalid signature."""
+        user_id = "invalid-sig-123"
+        email = "invalid@example.com"
+
+        # Create token with different secret
+        bad_token = jwt.encode(
+            {"user_id": user_id, "email": email, "token_type": "access",
+                "exp": datetime.utcnow() + timedelta(hours=1)},
+            "wrong-secret-key",
+            algorithm=JWT_ALGORITHM
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(bad_token, expected_type="access")
+
+        assert exc_info.value.status_code == 401
+        assert "Could not validate credentials" in exc_info.value.detail
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_missing_user_id(self):
+        """Test validating token with missing user_id raises 401."""
+        bad_token = jwt.encode(
+            {"email": "test@example.com", "token_type": "access",
+                "exp": datetime.utcnow() + timedelta(hours=1)},
+            JWT_SECRET_KEY,
+            algorithm=JWT_ALGORITHM
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(bad_token, expected_type="access")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid token payload" in exc_info.value.detail
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_missing_email(self):
+        """Test validating token with missing email raises 401."""
+        bad_token = jwt.encode(
+            {"user_id": "user123", "token_type": "access",
+                "exp": datetime.utcnow() + timedelta(hours=1)},
+            JWT_SECRET_KEY,
+            algorithm=JWT_ALGORITHM
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(bad_token, expected_type="access")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid token payload" in exc_info.value.detail
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_expired(self):
+        """Test validating an expired token raises 401."""
+        user_id = "expired-user-123"
+        email = "expired@example.com"
+
+        # Create token that expired 1 hour ago
+        exp = datetime.utcnow() - timedelta(hours=1)
+        expired_token = jwt.encode(
+            {
+                "user_id": user_id,
+                "email": email,
+                "token_type": "access",
+                "exp": exp,
+                "iat": datetime.utcnow() - timedelta(hours=2)
+            },
+            JWT_SECRET_KEY,
+            algorithm=JWT_ALGORITHM
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(expired_token, expected_type="access")
+
+        assert exc_info.value.status_code == 401
+        assert "Could not validate credentials" in exc_info.value.detail
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_validate_token_malformed(self):
+        """Test validating a malformed token string raises 401."""
+        malformed_token = "not.a.valid.jwt.token"
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_token(malformed_token, expected_type="access")
+
+        assert exc_info.value.status_code == 401
+
+
+class TestGenerateToken:
+    """Test generate_token function edge cases."""
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_generate_token_invalid_type_raises_value_error(self):
+        """Test that invalid token type raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid token_type"):
+            generate_token("user123", "test@example.com", token_type="invalid")
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_access_token_expiration_time_correct(self):
+        """Test that access token has correct expiration time (~30 min)."""
+        user_id = "expire-test-123"
+        email = "expire@example.com"
+
+        before = datetime.utcnow()
+        token = generate_token(user_id, email, token_type="access")
+        after = datetime.utcnow()
+
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        exp_time = datetime.fromtimestamp(payload["exp"])
+
+        # Expiration should be ~30 minutes from now
+        expected_min = before + \
+            timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES - 1)
+        expected_max = after + \
+            timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES + 1)
+
+        assert expected_min <= exp_time <= expected_max
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_refresh_token_expiration_time_correct(self):
+        """Test that refresh token has correct expiration time (~7 days)."""
+        user_id = "refresh-expire-123"
+        email = "refresh-expire@example.com"
+
+        before = datetime.utcnow()
+        token = generate_token(user_id, email, token_type="refresh")
+        after = datetime.utcnow()
+
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        exp_time = datetime.fromtimestamp(payload["exp"])
+
+        # Expiration should be ~7 days from now
+        expected_min = before + \
+            timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS, hours=-1)
+        expected_max = after + \
+            timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS, hours=1)
+
+        assert expected_min <= exp_time <= expected_max
+
+
+class TestPasswordEdgeCases:
+    """Test password hashing edge cases."""
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_hash_password_case_sensitive(self):
+        """Test that password hashing is case-sensitive."""
+        password = "CaseSensitive"
+        hashed = hash_password(password)
+
+        assert verify_password("CaseSensitive", hashed) is True
+        assert verify_password("casesensitive", hashed) is False
+        assert verify_password("CASESENSITIVE", hashed) is False
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_hash_password_special_characters(self):
+        """Test password with special characters."""
+        password = "P@ssw0rd!#$%^&*()"
+        hashed = hash_password(password)
+
+        assert verify_password(password, hashed) is True
+        assert verify_password("P@ssw0rd", hashed) is False
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_hash_password_unicode_characters(self):
+        """Test password with unicode characters."""
+        password = "пароль123🔒"
+        hashed = hash_password(password)
+
+        assert verify_password(password, hashed) is True
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_verify_password_none_values(self):
+        """Test password verification edge cases with None/empty."""
+        password = "ValidPassword123"
+        hashed = hash_password(password)
+
+        # Empty password should fail
+        assert verify_password("", hashed) is False
+
+
+class TestTokenEdgeCases:
+    """Test JWT token edge cases."""
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_token_with_special_characters_in_email(self):
+        """Test token with special characters in email."""
+        user_id = "special-123"
+        email = "user+tag@sub.example.com"
+
+        token = generate_token(user_id, email, token_type="access")
+        token_data = validate_token(token, expected_type="access")
+
+        assert token_data.email == email
+
+    @pytest.mark.unit
+    @pytest.mark.auth
+    def test_multiple_tokens_for_same_user_are_different(self):
+        """Test generating multiple tokens for same user produces different tokens."""
+        user_id = "multi-123"
+        email = "multi@example.com"
+
+        token1 = generate_token(user_id, email, token_type="access")
+        token2 = generate_token(user_id, email, token_type="access")
+
+        # Tokens should be different (different iat timestamp)
+        assert token1 != token2
+
+        # Both should validate correctly
+        data1 = validate_token(token1, expected_type="access")
+        data2 = validate_token(token2, expected_type="access")
+
+        assert data1.user_id == data2.user_id == user_id

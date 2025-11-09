@@ -1,5 +1,5 @@
 """
-Anthropic API client for Claude 3 Sonnet integration.
+Anthropic API client for Claude Sonnet 4.5 integration.
 
 This module provides a wrapper for the Anthropic API with rate limiting,
 error handling, and retry logic.
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class AnthropicClient:
     """
     Wrapper for Anthropic API with rate limiting and error handling.
-    
+
     Attributes:
         client: Anthropic API client
         rate_limiter: Token bucket rate limiter for API calls
@@ -51,31 +51,33 @@ class AnthropicClient:
     ) -> Dict[str, Any]:
         """
         Create a message using Claude 3 Sonnet.
-        
+
         Args:
             prompt: User prompt/message
             system_message: Optional system message for context
             max_tokens: Maximum tokens in response (default from settings)
             temperature: Temperature for response generation (default from settings)
-            
+
         Returns:
             Dict containing response with 'content' and 'usage' keys
-            
+
         Raises:
             APIError: If API call fails after retries
         """
         # Wait for rate limiter
         if not self.rate_limiter.wait_and_acquire(tokens=1, timeout=60.0):
-            raise RateLimitError("Rate limit exceeded, timeout waiting for token")
+            raise RateLimitError(
+                "Rate limit exceeded, timeout waiting for token")
 
         max_tokens = max_tokens or settings.llm_max_tokens
         temperature = temperature if temperature is not None else settings.llm_temperature
 
         try:
-            logger.info(f"Calling Claude API with prompt length: {len(prompt)}")
-            
+            logger.info(
+                f"Calling Claude API with prompt length: {len(prompt)}")
+
             messages = [{"role": "user", "content": prompt}]
-            
+
             response = self.client.messages.create(
                 model=settings.llm_model,
                 max_tokens=max_tokens,
@@ -86,7 +88,7 @@ class AnthropicClient:
 
             # Extract response content
             content = response.content[0].text if response.content else ""
-            
+
             result = {
                 "content": content,
                 "usage": {

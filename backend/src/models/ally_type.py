@@ -14,7 +14,7 @@ from src.models.user_profile import generate_uuid
 class AllyType(Base):
     """
     User-defined professional ally type category.
-    
+
     Attributes:
         id: Unique identifier (UUID)
         user_profile_id: Reference to UserProfile who created this ally type
@@ -29,7 +29,8 @@ class AllyType(Base):
     __tablename__ = "ally_types"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_profile_id = Column(String, ForeignKey("user_profiles.id"), nullable=False, index=True)
+    user_profile_id = Column(String, ForeignKey(
+        "user_profiles.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     keywords = Column(JSON, nullable=False, default=list)
     criteria = Column(Text, nullable=True)
@@ -48,7 +49,7 @@ class AllyType(Base):
 class DeducedAllyType(Base):
     """
     AI-deduced professional ally type with confidence scoring.
-    
+
     This is the legacy model from the dream-job-ally-deduction feature.
     New development should use the AllyType model above.
     """
@@ -56,7 +57,8 @@ class DeducedAllyType(Base):
     __tablename__ = "deduced_ally_types"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    dream_job_id = Column(String, ForeignKey("dream_job_descriptions.id"), nullable=False, index=True)
+    dream_job_id = Column(String, ForeignKey(
+        "dream_job_descriptions.id"), nullable=False, index=True)
     ally_type_name = Column(String, nullable=False)
     confidence_score = Column(Float, nullable=False)
     selection_rationale = Column(Text, nullable=False)
@@ -64,11 +66,13 @@ class DeducedAllyType(Base):
     engagement_strategy = Column(Text, nullable=True)
     rank = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    llm_model = Column(String, nullable=False, default="claude-3-sonnet-20240229")
+    llm_model = Column(String, nullable=False,
+                       default="claude-sonnet-4-5-20250929")
     llm_prompt_version = Column(String, nullable=False, default="1.0")
 
     # Relationships
-    dream_job = relationship("DreamJobDescription", back_populates="ally_types")
+    dream_job = relationship("DreamJobDescription",
+                             back_populates="ally_types")
 
     def __repr__(self):
         return f"<DeducedAllyType(id={self.id}, name={self.ally_type_name}, confidence={self.confidence_score})>"
