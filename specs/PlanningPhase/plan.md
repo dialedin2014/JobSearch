@@ -7,26 +7,26 @@
 
 ## Summary
 
-Enable job seekers to automatically discover relevant professional allies by analyzing their resume and dream job description using Claude 3 Sonnet LLM. The system will deduce appropriate ally types (e.g., "AI/ML Technical Leaders", "Career Transition Mentors"), generate platform-specific search queries, and discover matching professionals across GitHub, Twitter/X, and LinkedIn. Core technical approach: LangChain + FAISS RAG pipeline for document processing, Claude 3 Sonnet (Anthropic API) for ally type deduction and search query generation, FastAPI backend with React frontend for web interface.
+Enable job seekers to automatically discover relevant professional allies by analyzing their resume and dream job description using Claude Sonnet 4.5 LLM. The system will deduce appropriate ally types (e.g., "AI/ML Technical Leaders", "Career Transition Mentors"), generate platform-specific search queries, and discover matching professionals across GitHub, Twitter/X, and LinkedIn. Core technical approach: LangChain + FAISS RAG pipeline for document processing, Claude Sonnet 4.5 (Anthropic API) for ally type deduction and search query generation, FastAPI backend with React frontend for web interface.
 
 ## Technical Context
 
 **Language/Version**: Python 3.12  
-**Primary Dependencies**: FastAPI, LangChain, LangChain Community, anthropic (Claude 3 Sonnet API), FAISS (faiss-cpu), Hugging Face Transformers (sentence-transformers/all-MiniLM-L6-v2), PyPDF2 or pdfplumber (PDF parsing), python-docx (Word parsing), httpx (async HTTP client)  
+**Primary Dependencies**: FastAPI, LangChain, LangChain Community, anthropic (Claude Sonnet 4.5 API), FAISS (faiss-cpu), Hugging Face Transformers (sentence-transformers/all-MiniLM-L6-v2), PyPDF2 or pdfplumber (PDF parsing), python-docx (Word parsing), httpx (async HTTP client)  
 **Storage**: FAISS vector store for resume/job description embeddings, local file storage for uploaded resumes, PostgreSQL or SQLite for user profiles and ally type history  
 **Testing**: pytest for unit/integration tests, pytest-asyncio for async testing, pylint for code quality  
 **Target Platform**: Linux server (containerized), web browser clients  
 **Project Type**: Web application (FastAPI backend + React/Next.js frontend)  
 **Performance Goals**: Resume parsing <5s, ally type deduction <30s (per SC-002), dream job updates <15s (per SC-009), handle concurrent uploads from 100+ users  
-**Constraints**: Claude 3 Sonnet API rate limits (tier-dependent), <200ms p95 for API responses (excluding LLM calls), cost management for LLM API calls (~$0.01-0.03 per analysis)  
+**Constraints**: Claude Sonnet 4.5 API rate limits (tier-dependent), <200ms p95 for API responses (excluding LLM calls), cost management for LLM API calls (~$0.01-0.03 per analysis)  
 **Scale/Scope**: 10k users initially, 1k daily resume uploads, 5k daily ally discovery requests, support PDF/Word/text resume formats up to 10MB
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-- [x] **RAG-First AI Architecture**: Feature uses LangChain + FAISS + Claude 3 Sonnet (Anthropic API) for resume/dream job analysis and ally type deduction with vector embeddings
-- [x] **Privacy & Ethical Data Use**: Only public APIs (GitHub, Twitter/X, LinkedIn) with ToS compliance, ethical prompts for ally recommendations, user consent for resume upload  
+- [x] **RAG-First AI Architecture**: Feature uses LangChain + FAISS + Claude Sonnet 4.5 (Anthropic API) for resume/dream job analysis and ally type deduction with vector embeddings
+- [x] **Privacy & Ethical Data Use**: Only public APIs (GitHub, Twitter/X, LinkedIn) with ToS compliance, ethical prompts for ally recommendations, user consent for resume upload
 - [x] **Container-Native Development**: .devcontainer.json with Python 3.12, requirements.txt with pinned versions, Docker deployment
 - [x] **Priority-Driven Feature Development**: 4 user stories (P1: Resume/Dream Job Analysis, P2: Ally Discovery, P3: Gap Analysis, P4: Goal Refinement) with independent testability
 - [x] **API Rate Limiting & Resilience**: Anthropic API rate limiting, exponential backoff for GitHub/Twitter/LinkedIn APIs, circuit breakers, caching for repeated queries
@@ -64,7 +64,7 @@ backend/
 │   │   └── professional_ally.py
 │   ├── services/
 │   │   ├── resume_parser.py
-│   │   ├── llm_service.py           # Claude 3 Sonnet integration
+│   │   ├── llm_service.py           # Claude Sonnet 4.5 integration
 │   │   ├── ally_deduction.py
 │   │   ├── ally_discovery.py
 │   │   ├── gap_analysis.py
@@ -139,7 +139,7 @@ No violations - All constitutional principles satisfied. No complexity justifica
 
 All technical unknowns resolved and documented in `research.md`:
 
-- ✅ Claude 3 Sonnet integration strategy with Anthropic SDK
+- ✅ Claude Sonnet 4.5 integration strategy with Anthropic SDK
 - ✅ Resume parsing approach (PyPDF2 + pdfplumber fallback)
 - ✅ LangChain + FAISS RAG pipeline architecture
 - ✅ External API integration patterns (httpx + circuit breakers)
@@ -182,12 +182,12 @@ specs/PlanningPhase/
     └── ally-discovery.yaml
 
 .github/
-└── copilot-instructions.md ✅  # Updated with Python 3.12 + Claude 3 Sonnet stack
+└── copilot-instructions.md ✅  # Updated with Python 3.12 + Claude Sonnet 4.5 stack
 ```
 
 ### Key Decisions Made
 
-1. **LLM Provider**: Claude 3 Sonnet (Anthropic API) selected over Ollama for superior reasoning quality
+1. **LLM Provider**: Claude Sonnet 4.5 (Anthropic API) selected over Ollama for superior reasoning quality
 2. **Architecture**: Web application (FastAPI + React/Next.js) for professional UI and API separation
 3. **Database**: PostgreSQL for production, SQLite for development
 4. **Resume Parsing**: Multi-library fallback strategy (PyPDF2 → pdfplumber)
@@ -199,6 +199,7 @@ specs/PlanningPhase/
 **Phase 2: Task Breakdown** - Run `/speckit.tasks` command to generate detailed implementation tasks organized by user story priority (P1, P2, P3, P4).
 
 Expected task structure:
+
 1. **Phase 1: Setup** (T001-T007) - Project initialization, dependencies
 2. **Phase 2: Foundation** (T008-T013) - RAG pipeline, LLM integration, API clients
 3. **Phase 3: User Story 1 (P1)** - Resume analysis & ally type deduction (MVP)
@@ -224,6 +225,7 @@ All 12 success criteria from spec are achievable with this design:
 **Implementation Plan**: `D:\src\git\gh\di\JobSearch\specs\PlanningPhase\plan.md`
 
 **Generated Artifacts**:
+
 - ✅ `research.md` - 7 research areas with technical decisions
 - ✅ `data-model.md` - 10 entities with complete SQLAlchemy models
 - ✅ `quickstart.md` - Complete local development guide

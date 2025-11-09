@@ -51,5 +51,10 @@
       "onAutoForward": "silent"
     }
   },
+  "remoteEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
+    "SECRET_KEY": "${localEnv:SECRET_KEY}",
+    "DATABASE_URL": "${localEnv:DATABASE_URL:sqlite:///./jobsearch_dev.db}"
+  },
   "remoteUser": "vscode"
 }
