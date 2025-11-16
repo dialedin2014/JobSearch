@@ -110,7 +110,8 @@ class AnthropicClient:
         """
         total_calls = api_metrics["total_calls"]
         avg_response_time = (
-            api_metrics["total_response_time_ms"] / api_metrics["successful_calls"]
+            api_metrics["total_response_time_ms"] /
+            api_metrics["successful_calls"]
             if api_metrics["successful_calls"] > 0
             else 0
         )

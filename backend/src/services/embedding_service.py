@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
     """
     Service for generating text embeddings using sentence-transformers.
-    
+
     Uses the all-MiniLM-L6-v2 model which produces 384-dimensional embeddings.
-    
+
     Attributes:
         model: SentenceTransformer model instance
         dimension: Embedding vector dimension (384 for all-MiniLM-L6-v2)
@@ -29,7 +29,7 @@ class EmbeddingService:
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
         """
         Initialize embedding service.
-        
+
         Args:
             model_name: HuggingFace model identifier
         """
@@ -40,10 +40,10 @@ class EmbeddingService:
     def encode(self, texts: List[str]) -> np.ndarray:
         """
         Generate embeddings for a list of texts.
-        
+
         Args:
             texts: List of text strings to embed
-            
+
         Returns:
             numpy array of shape (len(texts), dimension)
         """
@@ -54,10 +54,10 @@ class EmbeddingService:
     def encode_single(self, text: str) -> np.ndarray:
         """
         Generate embedding for a single text.
-        
+
         Args:
             text: Text string to embed
-            
+
         Returns:
             numpy array of shape (dimension,)
         """
@@ -66,21 +66,21 @@ class EmbeddingService:
     def cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """
         Calculate cosine similarity between two embeddings.
-        
+
         Args:
             embedding1: First embedding vector
             embedding2: Second embedding vector
-            
+
         Returns:
             Similarity score between -1 and 1 (higher is more similar)
         """
         # Normalize vectors
         norm1 = np.linalg.norm(embedding1)
         norm2 = np.linalg.norm(embedding2)
-        
+
         if norm1 == 0 or norm2 == 0:
             return 0.0
-        
+
         # Calculate cosine similarity
         similarity = np.dot(embedding1, embedding2) / (norm1 * norm2)
         return float(similarity)
@@ -149,7 +149,8 @@ class EmbeddingService:
             Tuple of (FAISS index, list of text chunks) or None if not found
         """
         index_path = os.path.join("vector_stores", f"{user_id}_resume.index")
-        chunks_path = os.path.join("vector_stores", f"{user_id}_resume_chunks.pkl")
+        chunks_path = os.path.join(
+            "vector_stores", f"{user_id}_resume_chunks.pkl")
 
         if not os.path.exists(index_path) or not os.path.exists(chunks_path):
             logger.warning(f"Vector store not found for user {user_id}")
@@ -161,7 +162,8 @@ class EmbeddingService:
         with open(chunks_path, 'rb') as f:
             chunks = pickle.load(f)
 
-        logger.info(f"Loaded vector store for user {user_id} with {len(chunks)} chunks")
+        logger.info(
+            f"Loaded vector store for user {user_id} with {len(chunks)} chunks")
         return index, chunks
 
     def search_similar_chunks(
@@ -190,10 +192,12 @@ class EmbeddingService:
         index, chunks = vector_store
 
         # Encode query
-        query_embedding = self.encode_single(query_text).astype('float32').reshape(1, -1)
+        query_embedding = self.encode_single(
+            query_text).astype('float32').reshape(1, -1)
 
         # Search FAISS index
-        distances, indices = index.search(query_embedding, min(top_k, len(chunks)))
+        distances, indices = index.search(
+            query_embedding, min(top_k, len(chunks)))
 
         # Return results
         results = [

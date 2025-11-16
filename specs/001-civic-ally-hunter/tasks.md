@@ -2,7 +2,7 @@
 
 **Feature**: 001-civic-ally-hunter  
 **Created**: November 8, 2025  
-**Total Tasks**: 137  
+**Total Tasks**: 139  
 **Estimated Effort**: 12-16 weeks (1-2 developers)
 
 ## Task Legend
@@ -77,7 +77,7 @@
 - [ ] T023 [P] [US1] Create backend/src/integrations/github_client.py: GitHubClient class with search_users(query, per_page, page), get_user_profile(username), get_user_issues(username), rate_limiter (5000 req/hour), circuit breaker (failure_threshold=5, recovery_timeout=60s)
 - [ ] T024 [P] [US1] Create backend/src/integrations/twitter_client.py: TwitterClient class with search_tweets(query, max_results), get_user_profile(username), rate_limiter (300 req/15min), exponential backoff (1-10s delays)
 - [ ] T025 [P] [US1] Create backend/src/integrations/linkedin_client.py: LinkedInClient class with search_profiles(query) using public endpoints only, ToS-compliant scraping, **manual URL input as fallback**, aggressive caching (24hr TTL)
-- [ ] T025a [P] [US1] **PRIMARY METHOD** Create backend/src/api/routes/linkedin.py: POST /linkedin/manual-add endpoint accepting LinkedIn profile URL (linkedin.com/in/username format), validate URL format with regex, parse public profile HTML to extract name (required), title (required), company (required), headline (optional), store in Contact with source="linkedin_manual_input", return Contact record with parsing_success boolean, handle parsing errors with user-friendly messages (addresses FR-003a requirement - manual URL input is the primary LinkedIn integration method)
+- [ ] T025a [P] [US1] **PRIMARY METHOD** Create backend/src/api/routes/linkedin.py: POST /linkedin/manual-add endpoint accepting LinkedIn profile URL (linkedin.com/in/username format), validate URL format with regex ^https?://(www\.)?linkedin\.com/in/[a-zA-Z0-9_-]+/?$, parse public profile HTML to extract name (required), title (required), company (required), headline (optional), store in Contact with source="linkedin_manual_input", return Contact record with parsing_success boolean and parsed_fields array; **Parsing Success Criteria**: FULL SUCCESS = all 3 required fields extracted (name + title + company), PARTIAL SUCCESS = 2/3 required fields extracted (return parsed_fields list + warning message "Missing: [field_name]"), FAILURE = <2 required fields extracted (return error "Unable to extract sufficient profile data. Please verify profile is public and try again. Missing required fields: [field_names]"); headline is always optional and doesn't affect success status; handle parsing errors with user-friendly messages (addresses FR-003a requirement - manual URL input is the primary LinkedIn integration method)
 - [ ] T026 [P] [US1] Create backend/src/integrations/apollo_client.py: ApolloClient class with enrich_contact(name, company), search_people(query, filters), rate_limiter (TBD based on tier)
 - [ ] T027 [S] Create backend/src/core/rate_limiter.py: TokenBucketRateLimiter class with acquire(tokens=1), wait_and_acquire(timeout=60), thread-safe implementation
 - [ ] T028 [S] Create backend/src/core/circuit_breaker.py: CircuitBreakerManager using circuitbreaker library, failure_threshold=5, recovery_timeout=60s, half_open state logic
@@ -120,8 +120,9 @@
 - [ ] T044f [S] [US1] Write integration tests for embedding service: test_encode_single, test_encode_batch, test_embedding_dimensions, test_similarity_calculation - backend/tests/integration/test_embedding_service.py
 - [ ] T044g [S] [US1] Achieve ≥80% test coverage for Phase 2 code: run pytest --cov=src --cov-report=html, verify API client resilience, validate search orchestration, document coverage in htmlcov/index.html
 - [ ] T044h [P] [US1] Write unit tests for ToS compliance validation (FR-012): test_check_github_tos (validates rate limits, allowed endpoints), test_check_twitter_tos (validates 15min window, max_results limits), test_check_linkedin_tos (validates public-only access, robots.txt compliance, manual URL input requirement), test_compliance_error_raising - backend/tests/unit/test_compliance.py - ≥90% coverage target
+- [ ] T044i [P] [US1] Write live GitHub API integration test: test_github_search_real_api in backend/tests/integration/test_github_live_api.py that makes actual API call to GitHub Users Search API (e.g., search for 'torvalds' or 'guido'), validates response structure (login, id, avatar_url, html_url fields present), verifies rate limit headers (X-RateLimit-Remaining, X-RateLimit-Reset), confirms data quality (results match search term), requires GITHUB_API_TOKEN in test environment, marked with @pytest.mark.live_api decorator for optional execution, skipped if token not configured
 
-**Constitution Principle VI Compliance**: Phase 2 NOT complete until T044a-h finished with ≥80% coverage and all tests passing.
+**Constitution Principle VI Compliance**: Phase 2 NOT complete until T044a-i finished with ≥80% coverage and all tests passing.
 
 ---
 
@@ -184,7 +185,7 @@
 - [ ] T067 [S] [US3] Create backend/src/services/network_mapper.py: NetworkMapper class with build_graph(user_profile, target_contacts), uses NetworkX for graph construction
 - [ ] T068 [S] [US3] Implement network node creation: add user's resume contacts as nodes (from ParsedResume.work_history), add target contacts as nodes, add organizations as nodes
 - [ ] T069 [S] [US3] Implement network edge creation: add edges for employment (person → company), add edges for shared employment (person ↔ person via company), add edges for investor/acquisition relationships (company ↔ company)
-- [ ] T070 [S] [US3] Calculate connection paths: use NetworkX shortest_path(user_node, target_node), limit to paths ≤3 degrees, calculate connection_strength (1.0 / path_length, weighted by recency)
+- [ ] T070 [S] [US3] Calculate connection paths: use NetworkX shortest_path(user_node, target_node), limit to paths ≤3 degrees, calculate connection_strength using formula: **connection_strength = (1.0 / path_length) × recency_factor** where recency_factor is determined by most recent shared connection date: 1.0 if connection <1 year old, 0.8 if 1-3 years old, 0.6 if 3-5 years old, 0.4 if >5 years old, 0.3 if date unknown (use ParsedResume.work_history dates or Contact.last_updated for recency calculation); example: 2-degree path with 6-month-old connection = (1.0/2) × 1.0 = 0.5 strength; 3-degree path with 4-year-old connection = (1.0/3) × 0.6 = 0.2 strength; paths with strength <0.4 filtered out per SC-006 requirement
 - [ ] T071 [S] [US3] Store network connections: for each path found, create NetworkConnection record with path_metadata = {nodes, edges, connection_type}, deduplicate by source+target
 
 ### Network Visualization (4 tasks)
@@ -273,8 +274,9 @@
 - [ ] T103 [S] Setup production deployment infrastructure (SC-008): **Platform Decision Matrix** (score 0-10 each criterion, select highest total): (1) Cost: PostgreSQL add-on + 2 instances <$50/mo, (2) Auto-scaling: supports 2-10 instances with CPU/memory triggers, (3) PostgreSQL: managed service ≥15GB storage, (4) Health checks: native /health endpoint monitoring with auto-restart, (5) Uptime SLA: ≥99.5% guarantee. **Recommended**: Railway (score ~42/50) for dev-friendly pricing + PostgreSQL + auto-scaling. **Note**: Platform selection requires project lead approval before proceeding with configuration. After platform selection approval: configure load balancer, auto-scaling (2-10 instances), health checks (/health polling every 30s), SSL/TLS certificates (Let's Encrypt), environment variable management (platform secrets), database connection pooling (SQLAlchemy pool_size=10, max_overflow=20)
 - [ ] T104 [P] Create deployment documentation: README.md with setup instructions, .env.example with all variables, Docker Compose for local dev, deployment guide for cloud platforms (Heroku/Render/Railway)
 - [ ] T105 [P] Create database migration guide: Alembic migration scripts for all schema changes, rollback procedures, data migration scripts for existing users (if any)
-- [ ] T106 [P] Final end-to-end testing: complete user journey from registration → resume upload → ally type creation → search → network mapping → outreach generation → export, verify all success criteria (SC-001 through SC-010), **load testing with 100 concurrent users** (test duration: 10 minutes, ramp-up: 0→100 users over 2 minutes, target endpoint: POST /api/v1/search, success threshold: p95 latency <45s at 100 concurrent users per NFR-005, baseline 30s target from NFR-001, measure performance degradation must not exceed 20% increase in average response time), performance benchmarks using locust or k6 load testing tool
-- [ ] T106a [S] Intermediate load testing for NFR-005 validation: progressive load tests at 25, 50, 75 concurrent users (5 min duration each, same ramp-up pattern as T106), measure average search response time at each level, verify performance degradation ≤20% from 10-user baseline (30s) to each intermediate level, document performance curve to validate linear scaling assumption before 100-user test, use k6 load testing tool with script reusable from T106, generates performance report showing: baseline (10 users: 30s avg), intermediate levels (25/50/75 users: measure avg response time), validates degradation threshold before final 100-user test
+- [ ] T105a [S] **PREREQUISITE FOR T106** Establish 10-user baseline performance: Run k6 load test with 10 concurrent users (5 min duration, 1 min ramp-up) against POST /api/v1/search endpoint, measure average response time and p95 latency, document actual baseline (target: ≤30s average per NFR-001, but measure real performance), results inform NFR-005 degradation calculations (max acceptable at 100 users = baseline × 1.2), store baseline metrics in performance-baseline.md for comparison during T106 and T106a
+- [ ] T106 [P] Final end-to-end testing: complete user journey from registration → resume upload → ally type creation → search → network mapping → outreach generation → export, verify all success criteria (SC-001 through SC-010), **load testing with 100 concurrent users** (test duration: 10 minutes, ramp-up: 0→100 users over 2 minutes, target endpoint: POST /api/v1/search, success threshold: p95 latency <45s at 100 concurrent users per NFR-005, compare against T105a measured baseline, measure performance degradation must not exceed 20% increase from T105a baseline), performance benchmarks using k6 load testing tool with script reusable from T105a
+- [ ] T106a [S] Intermediate load testing for NFR-005 validation: **REQUIRES T105a baseline completion first** - progressive load tests at 25, 50, 75 concurrent users (5 min duration each, same ramp-up pattern as T106), measure average search response time at each level, verify performance degradation ≤20% from T105a measured 10-user baseline to each intermediate level, document performance curve to validate linear scaling assumption before 100-user test, use k6 load testing tool with script reusable from T105a/T106, generates performance report showing: baseline (10 users: T105a measured avg), intermediate levels (25/50/75 users: measure avg response time), validates degradation threshold before final 100-user test
 - [ ] T107 [P] Quarterly ToS compliance review: Create backend/src/integrations/compliance_review.py with check_platform_tos_updates() function that documents ToS versions checked (GitHub, Twitter, LinkedIn, Apollo) with review_date timestamp; scheduled task runs quarterly to validate rate limits, allowed endpoints, forbidden patterns haven't changed; updates ComplianceError rules if platform ToS updated; stores review results in compliance_audit_log table (platform, tos_version, review_date, changes_detected, action_taken); addresses FR-012 periodic compliance validation requirement
 
 ---
@@ -284,19 +286,19 @@
 | Phase     | Tasks           | Focus                                        | Target User Story |
 | --------- | --------------- | -------------------------------------------- | ----------------- |
 | 1         | 30 (T001-T022g) | Foundation, Auth, Resume, Ally Types + Tests | US1 (P1)          |
-| 2         | 30 (T023-T044g) | Multi-Platform Search + Tests                | US1 (P1)          |
+| 2         | 31 (T023-T044i) | Multi-Platform Search + Tests                | US1 (P1)          |
 | 3         | 21 (T045-T060e) | Shadow Sequence Amplifier + Tests            | US2 (P2)          |
 | 4         | 22 (T061-T078d) | Organization Network Mapping + Tests         | US3 (P3)          |
 | 5         | 15 (T079-T090c) | Outreach Template Generator + Tests          | US4 (P4)          |
 | 6         | 20 (T091-T107)  | Polish, Integration Testing & Production     | All               |
-| **Total** | **138**         |                                              |                   |
+| **Total** | **139**         |                                              |                   |
 
 ## Critical Path
 
 Sequential dependencies (must execute in order):
 
 1. T001-T005 (setup) → T006-T008 (auth) → T009-T012 (models) → T013-T017 (resume parsing) → T018-T022 (ally types) → **T022a-T022g (automated tests - COMPLETE ✅)**
-2. T023-T029 (API clients + models) → T034-T037 (FAISS setup) → T038-T044 (search orchestration) → **T044a-T044g (Phase 2 automated tests - required before Phase 3)**
+2. T023-T029 (API clients + models) → T034-T037 (FAISS setup) → T038-T044 (search orchestration) → **T044a-T044i (Phase 2 automated tests - required before Phase 3)**
 3. T045-T048 (LLM setup) → T049-T053 (counter-queries) → T054-T060 (bridge pitches) → **T060a-T060e (Phase 3 automated tests - required before Phase 4)**
 4. T061-T065 (org data) → T066-T071 (network graph) → T072-T078 (visualization) → **T078a-T078d (Phase 4 automated tests - required before Phase 5)**
 5. T079-T084 (outreach templates) → T085-T090 (export) → **T090a-T090c (Phase 5 automated tests - required before Phase 6)**

@@ -161,7 +161,8 @@ class LLMService:
         cached_response = self._get_from_cache(cache_key)
 
         if cached_response is not None:
-            logger.info("Returning cached ally type deduction (cost savings: ~$0.01-0.03)")
+            logger.info(
+                "Returning cached ally type deduction (cost savings: ~$0.01-0.03)")
             return cached_response
 
         logger.info("Deducing ally types with Claude 3 Sonnet (cache miss)")

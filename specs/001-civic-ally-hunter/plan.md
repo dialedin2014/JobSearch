@@ -257,7 +257,10 @@ class NetworkConnection(Base):
     target_contact_id: UUID (FK) # Ally search result
     connection_type: str # "alumni", "employer", "investor", "conference"
     shared_organizations: List[str] (JSON)
-    connection_strength: float (0-1)
+    connection_strength: float (0-1) # Calculated: (1.0/path_length) × recency_factor
+        # recency_factor: 1.0 (<1yr), 0.8 (1-3yr), 0.6 (3-5yr), 0.4 (>5yr), 0.3 (unknown)
+        # Example: 2-degree path, 6mo old = (1.0/2) × 1.0 = 0.5
+        # Minimum threshold: 0.4 per SC-006
     path_metadata: dict (JSON) # Graph path details
     created_at: datetime
 ```
