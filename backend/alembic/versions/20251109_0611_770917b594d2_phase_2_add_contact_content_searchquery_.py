@@ -10,7 +10,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import Text
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '770917b594d2'
@@ -26,14 +25,14 @@ def upgrade() -> None:
                     sa.Column('user_profile_id', sa.UUID(), nullable=False),
                     sa.Column('original_query', sa.String(
                         length=500), nullable=False),
-                    sa.Column('ally_type_filters', postgresql.JSONB(astext_type=Text()),
+                    sa.Column('ally_type_filters', sa.JSON(),
                               nullable=True, comment='List of ally type UUIDs to filter search'),
-                    sa.Column('counter_queries', postgresql.JSONB(astext_type=Text(
-                    )), nullable=True, comment='Generated counter-queries for diverse perspectives'),
+                    sa.Column('counter_queries', sa.JSON(
+                    ), nullable=True, comment='Generated counter-queries for diverse perspectives'),
                     sa.Column('results_count', sa.Integer(), nullable=True),
                     sa.Column('status', sa.String(length=50), nullable=True,
                               comment='Status: processing, completed, failed'),
-                    sa.Column('query_metadata', postgresql.JSONB(astext_type=Text()), nullable=True,
+                    sa.Column('query_metadata', sa.JSON(), nullable=True,
                               comment='Search parameters, platform filters, alternative_strategies, etc.'),
                     sa.Column('executed_at', sa.DateTime(), nullable=False),
                     sa.Column('completed_at', sa.DateTime(), nullable=True),
@@ -62,14 +61,14 @@ def upgrade() -> None:
                     sa.Column('linkedin_url', sa.String(
                         length=500), nullable=True),
                     sa.Column('relevance_score', sa.Float(), nullable=True),
-                    sa.Column('matched_keywords', postgresql.JSONB(
-                        astext_type=Text()), nullable=True),
+                    sa.Column('matched_keywords', sa.JSON(),
+                              nullable=True),
                     sa.Column('source_platform', sa.String(length=50), nullable=False,
                               comment='Platform: github, twitter, linkedin, apollo, manual'),
-                    sa.Column('profile_data', postgresql.JSONB(astext_type=Text()),
+                    sa.Column('profile_data', sa.JSON(),
                               nullable=True, comment='Full profile data from source platform'),
-                    sa.Column('enrichment_data', postgresql.JSONB(astext_type=Text(
-                    )), nullable=True, comment='Enrichment data from Apollo or other services'),
+                    sa.Column('enrichment_data', sa.JSON(
+                    ), nullable=True, comment='Enrichment data from Apollo or other services'),
                     sa.Column('created_at', sa.DateTime(), nullable=False),
                     sa.Column('last_updated', sa.DateTime(), nullable=False),
                     sa.ForeignKeyConstraint(
@@ -95,13 +94,13 @@ def upgrade() -> None:
                     sa.Column('source_platform', sa.String(length=50), nullable=False,
                               comment='Platform: github, twitter, linkedin, blog, etc.'),
                     sa.Column('url', sa.String(length=500), nullable=True),
-                    sa.Column('content_metadata', postgresql.JSONB(astext_type=Text()), nullable=True,
+                    sa.Column('content_metadata', sa.JSON(), nullable=True,
                               comment='Additional metadata (likes, shares, comments, tags, etc.)'),
                     sa.Column('posted_at', sa.DateTime(), nullable=True),
                     sa.Column('embedding_vector', sa.LargeBinary(), nullable=True,
                               comment='384-dim vector embedding from sentence-transformers'),
-                    sa.Column('ally_type_classification', postgresql.JSONB(astext_type=Text(
-                    )), nullable=True, comment='Relevance scores for each ally type {ally_type_id: score}'),
+                    sa.Column('ally_type_classification', sa.JSON(
+                    ), nullable=True, comment='Relevance scores for each ally type {ally_type_id: score}'),
                     sa.Column('created_at', sa.DateTime(), nullable=False),
                     sa.ForeignKeyConstraint(
                         ['contact_id'], ['contacts.id'], ondelete='CASCADE'),
@@ -131,17 +130,11 @@ def upgrade() -> None:
                     'search_results', ['contact_id'], unique=False)
     op.create_index(op.f('ix_search_results_search_query_id'),
                     'search_results', ['search_query_id'], unique=False)
-    op.drop_constraint(None, 'user_profiles', type_='foreignkey')
-    op.drop_column('user_profiles', 'parsed_resume_id')
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.add_column('user_profiles', sa.Column(
-        'parsed_resume_id', sa.VARCHAR(), nullable=True))
-    op.create_foreign_key(None, 'user_profiles', 'parsed_resumes', [
-                          'parsed_resume_id'], ['id'])
     op.drop_index(op.f('ix_search_results_search_query_id'),
                   table_name='search_results')
     op.drop_index(op.f('ix_search_results_contact_id'),

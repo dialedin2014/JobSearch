@@ -7,6 +7,8 @@
         "speckit.implement": true
     },
     "chat.tools.terminal.autoApprove": {
+       "chat.tools.autoApprove": true,
+        "chat.tools.terminal.enableAutoApprove": true ,
         "**/*": true
     }
 }

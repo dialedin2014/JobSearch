@@ -63,7 +63,7 @@ description: "Task list for Dream Job Ally Deduction feature implementation"
 - [x] T022 [P] Create backend/src/api/dependencies/auth.py with get_current_user dependency
 - [x] T023 Setup HuggingFace embeddings in backend/src/services/embedding_service.py using sentence-transformers/all-MiniLM-L6-v2
 - [x] T024 [P] Create frontend/src/services/api.ts with axios client, base URL configuration, and error handling
-- [ ] T025 Run Alembic initial migration to create database schema: alembic revision --autogenerate -m "Initial schema"
+- [x] T025 Run Alembic initial migration to create database schema: alembic revision --autogenerate -m "Initial schema"
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -113,11 +113,11 @@ description: "Task list for Dream Job Ally Deduction feature implementation"
 
 ### Integration & Optimization (US1)
 
-- [ ] T048 [US1] Implement async background task processing in backend/src/api/routes/ally_types.py: use FastAPI BackgroundTasks for analyze_resume_and_dream_job workflow (parse → LLM call → save)
-- [ ] T049 [US1] Add LLM response caching in backend/src/services/llm_service.py: hash resume+dream_job text, cache results for 24 hours to reduce API costs (~$0.01-0.03 per analysis)
-- [ ] T050 [US1] Implement FAISS vector store initialization in backend/src/services/embedding_service.py: create_vector_store_from_resume(resume_text) using HuggingFace embeddings, persist to disk per user
-- [ ] T051 [US1] Add logging and monitoring to backend/src/integrations/anthropic_client.py: track API usage, response times, error rates, cost estimation ($3/million input tokens, $15/million output tokens)
-- [ ] T052 [US1] Run Alembic migration for User Story 1 models: alembic revision --autogenerate -m "Add US1 models: UserProfile, ParsedResume, DreamJob, AllyType"
+- [x] T048 [US1] Implement async background task processing in backend/src/api/routes/ally_types.py: use FastAPI BackgroundTasks for analyze_resume_and_dream_job workflow (parse → LLM call → save)
+- [x] T049 [US1] Add LLM response caching in backend/src/services/llm_service.py: hash resume+dream_job text, cache results for 24 hours to reduce API costs (~$0.01-0.03 per analysis)
+- [x] T050 [US1] Implement FAISS vector store initialization in backend/src/services/embedding_service.py: create_vector_store_from_resume(resume_text) using HuggingFace embeddings, persist to disk per user
+- [x] T051 [US1] Add logging and monitoring to backend/src/integrations/anthropic_client.py: track API usage, response times, error rates, cost estimation ($3/million input tokens, $15/million output tokens)
+- [x] T052 [US1] Run Alembic migration for User Story 1 models: alembic revision --autogenerate -m "Add US1 models: UserProfile, ParsedResume, DreamJob, AllyType"
 
 **US1 Checkpoint**: MVP complete - Users can upload resumes, get ally type recommendations with confidence scores
 

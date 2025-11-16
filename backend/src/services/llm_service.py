@@ -4,12 +4,19 @@ LLM service for ally type deduction using Claude 3 Sonnet.
 This module provides high-level LLM operations with structured prompts.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 import logging
+import hashlib
+from datetime import datetime, timedelta
 from src.integrations.anthropic_client import anthropic_client
 
 logger = logging.getLogger(__name__)
+
+# In-memory cache for LLM responses (in production, use Redis)
+# Structure: {cache_key: {"response": data, "timestamp": datetime}}
+_llm_cache: Dict[str, Dict[str, Any]] = {}
+CACHE_TTL_HOURS = 24
 
 # Prompt template for ally type deduction
 ALLY_DEDUCTION_PROMPT = """You are an expert career advisor analyzing a professional's resume and dream job to identify the most valuable types of professional allies they should connect with.
@@ -70,7 +77,7 @@ class LLMService:
     Service for LLM operations using Claude 3 Sonnet.
 
     Provides high-level methods for ally type deduction and other
-    LLM-powered features.
+    LLM-powered features with response caching.
     """
 
     def __init__(self):
@@ -78,11 +85,66 @@ class LLMService:
         self.client = anthropic_client
         self.prompt_version = "1.0"
 
+    def _generate_cache_key(self, resume_text: str, dream_job_text: str) -> str:
+        """
+        Generate a cache key from resume and dream job text.
+
+        Args:
+            resume_text: Resume text
+            dream_job_text: Dream job description
+
+        Returns:
+            SHA256 hash of combined texts
+        """
+        combined = f"{resume_text[:3000]}||{dream_job_text[:1000]}"
+        return hashlib.sha256(combined.encode()).hexdigest()
+
+    def _get_from_cache(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get response from cache if available and not expired.
+
+        Args:
+            cache_key: Cache key
+
+        Returns:
+            Cached response or None if not found/expired
+        """
+        if cache_key not in _llm_cache:
+            return None
+
+        cached = _llm_cache[cache_key]
+        age = datetime.utcnow() - cached["timestamp"]
+
+        if age > timedelta(hours=CACHE_TTL_HOURS):
+            # Cache expired, remove it
+            del _llm_cache[cache_key]
+            logger.info(f"Cache expired for key {cache_key[:16]}...")
+            return None
+
+        logger.info(f"Cache hit for key {cache_key[:16]}... (age: {age})")
+        return cached["response"]
+
+    def _save_to_cache(self, cache_key: str, response: List[Dict[str, Any]]) -> None:
+        """
+        Save response to cache.
+
+        Args:
+            cache_key: Cache key
+            response: Response to cache
+        """
+        _llm_cache[cache_key] = {
+            "response": response,
+            "timestamp": datetime.utcnow(),
+        }
+        logger.info(f"Cached response for key {cache_key[:16]}...")
+
     async def deduce_ally_types(
         self, resume_text: str, dream_job_text: str
     ) -> List[Dict[str, Any]]:
         """
         Deduce professional ally types from resume and dream job.
+
+        Uses caching to reduce API costs. Cache TTL is 24 hours.
 
         Args:
             resume_text: Full resume text or summary
@@ -94,7 +156,15 @@ class LLMService:
         Raises:
             ValueError: If LLM response cannot be parsed
         """
-        logger.info("Deducing ally types with Claude 3 Sonnet")
+        # Check cache first
+        cache_key = self._generate_cache_key(resume_text, dream_job_text)
+        cached_response = self._get_from_cache(cache_key)
+
+        if cached_response is not None:
+            logger.info("Returning cached ally type deduction (cost savings: ~$0.01-0.03)")
+            return cached_response
+
+        logger.info("Deducing ally types with Claude 3 Sonnet (cache miss)")
 
         # Prepare prompt
         prompt = ALLY_DEDUCTION_PROMPT.format(
@@ -155,6 +225,10 @@ class LLMService:
 
             logger.info(
                 f"Successfully deduced {len(validated_ally_types)} ally types")
+
+            # Cache the response
+            self._save_to_cache(cache_key, validated_ally_types)
+
             return validated_ally_types
 
         except json.JSONDecodeError as e:

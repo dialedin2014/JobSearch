@@ -2,7 +2,7 @@
 Anthropic API client for Claude Sonnet 4.5 integration.
 
 This module provides a wrapper for the Anthropic API with rate limiting,
-error handling, and retry logic.
+error handling, retry logic, and comprehensive monitoring.
 """
 
 from anthropic import Anthropic, APIError, RateLimitError
@@ -14,10 +14,29 @@ from tenacity import (
 )
 from typing import Dict, Any, List
 import logging
+import time
+from datetime import datetime
 from src.core.config import settings
 from src.core.rate_limiter import rate_limiter_manager
 
 logger = logging.getLogger(__name__)
+
+# Pricing for Claude Sonnet 4.5 (as of Nov 2024)
+# https://docs.anthropic.com/en/docs/about-claude/models
+INPUT_COST_PER_MILLION = 3.0  # $3 per million input tokens
+OUTPUT_COST_PER_MILLION = 15.0  # $15 per million output tokens
+
+# Global metrics (in production, use Prometheus or similar)
+api_metrics = {
+    "total_calls": 0,
+    "successful_calls": 0,
+    "failed_calls": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0,
+    "total_response_time_ms": 0,
+    "last_call_timestamp": None,
+}
 
 
 class AnthropicClient:
@@ -36,6 +55,81 @@ class AnthropicClient:
         self.rate_limiter = rate_limiter_manager.get_or_create(
             "anthropic", capacity=50, refill_rate=0.83
         )
+
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        """
+        Calculate API call cost in USD.
+
+        Args:
+            input_tokens: Number of input tokens
+            output_tokens: Number of output tokens
+
+        Returns:
+            Cost in USD
+        """
+        input_cost = (input_tokens / 1_000_000) * INPUT_COST_PER_MILLION
+        output_cost = (output_tokens / 1_000_000) * OUTPUT_COST_PER_MILLION
+        return input_cost + output_cost
+
+    def _update_metrics(
+        self,
+        success: bool,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        response_time_ms: float = 0,
+    ) -> None:
+        """
+        Update global API metrics.
+
+        Args:
+            success: Whether the API call succeeded
+            input_tokens: Number of input tokens
+            output_tokens: Number of output tokens
+            response_time_ms: Response time in milliseconds
+        """
+        api_metrics["total_calls"] += 1
+        api_metrics["last_call_timestamp"] = datetime.utcnow().isoformat()
+
+        if success:
+            api_metrics["successful_calls"] += 1
+            api_metrics["total_input_tokens"] += input_tokens
+            api_metrics["total_output_tokens"] += output_tokens
+            api_metrics["total_response_time_ms"] += response_time_ms
+
+            cost = self._calculate_cost(input_tokens, output_tokens)
+            api_metrics["total_cost_usd"] += cost
+        else:
+            api_metrics["failed_calls"] += 1
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """
+        Get current API usage metrics.
+
+        Returns:
+            Dict with API usage statistics and cost estimation
+        """
+        total_calls = api_metrics["total_calls"]
+        avg_response_time = (
+            api_metrics["total_response_time_ms"] / api_metrics["successful_calls"]
+            if api_metrics["successful_calls"] > 0
+            else 0
+        )
+
+        return {
+            "total_calls": total_calls,
+            "successful_calls": api_metrics["successful_calls"],
+            "failed_calls": api_metrics["failed_calls"],
+            "success_rate": (
+                api_metrics["successful_calls"] / total_calls
+                if total_calls > 0
+                else 0.0
+            ),
+            "total_input_tokens": api_metrics["total_input_tokens"],
+            "total_output_tokens": api_metrics["total_output_tokens"],
+            "total_cost_usd": round(api_metrics["total_cost_usd"], 4),
+            "avg_response_time_ms": round(avg_response_time, 2),
+            "last_call_timestamp": api_metrics["last_call_timestamp"],
+        }
 
     @retry(
         retry=retry_if_exception_type((APIError, RateLimitError)),
@@ -72,6 +166,10 @@ class AnthropicClient:
         max_tokens = max_tokens or settings.llm_max_tokens
         temperature = temperature if temperature is not None else settings.llm_temperature
 
+        start_time = time.time()
+        input_tokens = 0
+        output_tokens = 0
+
         try:
             logger.info(
                 f"Calling Claude API with prompt length: {len(prompt)}")
@@ -86,33 +184,57 @@ class AnthropicClient:
                 messages=messages,
             )
 
+            # Calculate response time
+            response_time_ms = (time.time() - start_time) * 1000
+
             # Extract response content
             content = response.content[0].text if response.content else ""
+
+            input_tokens = response.usage.input_tokens
+            output_tokens = response.usage.output_tokens
+
+            # Calculate cost
+            cost = self._calculate_cost(input_tokens, output_tokens)
 
             result = {
                 "content": content,
                 "usage": {
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
                 },
                 "model": response.model,
                 "stop_reason": response.stop_reason,
+                "cost_usd": round(cost, 6),
+                "response_time_ms": round(response_time_ms, 2),
             }
 
+            # Update metrics
+            self._update_metrics(
+                success=True,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                response_time_ms=response_time_ms,
+            )
+
             logger.info(
-                f"Claude API response: {response.usage.input_tokens} input tokens, "
-                f"{response.usage.output_tokens} output tokens"
+                f"Claude API response: {input_tokens} input tokens, "
+                f"{output_tokens} output tokens, "
+                f"cost: ${cost:.6f}, "
+                f"time: {response_time_ms:.2f}ms"
             )
 
             return result
 
         except RateLimitError as e:
+            self._update_metrics(success=False)
             logger.error(f"Rate limit exceeded: {e}")
             raise
         except APIError as e:
+            self._update_metrics(success=False)
             logger.error(f"Anthropic API error: {e}")
             raise
         except Exception as e:
+            self._update_metrics(success=False)
             logger.error(f"Unexpected error calling Claude API: {e}")
             raise
 
