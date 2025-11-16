@@ -110,24 +110,25 @@ class Contact(Base):
         back_populates="contact",
         cascade="all, delete-orphan"
     )
-    bridge_pitches = relationship(
-        "BridgePitch",
-        back_populates="target_contact",
-        cascade="all, delete-orphan",
-        foreign_keys="BridgePitch.target_contact_id"
-    )
-    network_connections_as_source = relationship(
-        "NetworkConnection",
-        back_populates="source_contact",
-        foreign_keys="NetworkConnection.source_contact_id",
-        cascade="all, delete-orphan"
-    )
-    network_connections_as_target = relationship(
-        "NetworkConnection",
-        back_populates="target_contact",
-        foreign_keys="NetworkConnection.target_contact_id",
-        cascade="all, delete-orphan"
-    )
+    # Phase 3+ relationships - commented out until those models are created
+    # bridge_pitches = relationship(
+    #     "BridgePitch",
+    #     back_populates="target_contact",
+    #     cascade="all, delete-orphan",
+    #     foreign_keys="BridgePitch.target_contact_id"
+    # )
+    # network_connections_as_source = relationship(
+    #     "NetworkConnection",
+    #     back_populates="source_contact",
+    #     foreign_keys="NetworkConnection.source_contact_id",
+    #     cascade="all, delete-orphan"
+    # )
+    # network_connections_as_target = relationship(
+    #     "NetworkConnection",
+    #     back_populates="target_contact",
+    #     foreign_keys="NetworkConnection.target_contact_id",
+    #     cascade="all, delete-orphan"
+    # )
 
     def __repr__(self) -> str:
         """String representation of Contact."""

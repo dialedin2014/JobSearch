@@ -71,10 +71,11 @@ class TestResumeTextExtraction:
 
         assert "Experience" in text
 
-    @patch('PyPDF2.PdfReader')
-    def test_extract_text_from_pdf_success(self, mock_pdf_reader, tmp_path):
+    @patch('src.services.resume_parser.pdfplumber')
+    @patch('src.services.resume_parser.PyPDF2')
+    def test_extract_text_from_pdf_success(self, mock_pypdf2, mock_pdfplumber, tmp_path):
         """Test successful PDF text extraction with PyPDF2."""
-        # Mock PDF reader
+        # Mock PyPDF2 PdfReader
         mock_page = Mock()
         mock_page.extract_text.return_value = """John Doe
         Software Engineer
@@ -85,7 +86,16 @@ class TestResumeTextExtraction:
 
         mock_reader_instance = Mock()
         mock_reader_instance.pages = [mock_page]
-        mock_pdf_reader.return_value = mock_reader_instance
+        mock_pypdf2.PdfReader.return_value = mock_reader_instance
+
+        # Also mock pdfplumber in case of fallback
+        mock_pdf_instance = Mock()
+        mock_pdf_page = Mock()
+        mock_pdf_page.extract_text.return_value = mock_page.extract_text.return_value
+        mock_pdf_instance.pages = [mock_pdf_page]
+        mock_pdf_instance.__enter__ = Mock(return_value=mock_pdf_instance)
+        mock_pdf_instance.__exit__ = Mock(return_value=False)
+        mock_pdfplumber.open.return_value = mock_pdf_instance
 
         # Create dummy PDF file
         pdf_file = tmp_path / "resume.pdf"

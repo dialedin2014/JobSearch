@@ -163,27 +163,52 @@ class ResumeParser:
         return parsed_data
 
     def _calculate_confidence(self, text: str) -> float:
-        """Calculate parsing confidence based on text quality."""
-        if not text or len(text) < 100:
+        """
+        Calculate parsing confidence based on text quality and extraction success.
+
+        Confidence score 0.0-1.0 based on:
+        - Text length and quality
+        - Presence of resume sections (experience, education, skills)
+        - Successful extraction of key fields
+        """
+        if not text or len(text.strip()) == 0:
             return 0.0
 
-        # Check for common resume indicators
-        indicators = [
-            r"experience",
-            r"education",
-            r"skills",
-            r"work",
-            r"employment",
-            r"degree",
-            r"university",
-            r"college",
+        # For very short text (< 20 chars), return 0.0
+        if len(text) < 20:
+            return 0.0
+
+        # For short text (< 50 chars), give minimal confidence only if it looks like resume content
+        if len(text) < 50:
+            # Check if it has any resume keywords
+            resume_indicators = ["experience",
+                                 "education", "skills", "work", "degree"]
+            text_lower = text.lower()
+            if any(indicator in text_lower for indicator in resume_indicators):
+                return 0.3
+            return 0.0
+
+        # Check for common resume sections
+        section_indicators = [
+            r"experience", r"education", r"skills", r"work history",
+            r"employment", r"degree", r"university", r"college"
         ]
 
-        matches = sum(1 for indicator in indicators if re.search(
+        matches = sum(1 for indicator in section_indicators if re.search(
             indicator, text, re.IGNORECASE))
-        confidence = min(1.0, matches / len(indicators) + 0.3)
 
-        return confidence
+        # Base confidence on section presence
+        base_confidence = min(1.0, (matches / len(section_indicators)) + 0.3)
+
+        # Adjust for text quality
+        if len(text) > 1000:  # Substantial content
+            base_confidence += 0.1
+        if re.search(r'\d{4}', text):  # Contains years (likely dates)
+            base_confidence += 0.05
+        if re.search(r'@', text):  # Contains email
+            base_confidence += 0.05
+
+        return min(1.0, base_confidence)
 
     def _extract_skills(self, text: str) -> list:
         """
@@ -234,9 +259,12 @@ class ResumeParser:
         metric_patterns = [
             r'\d+%',  # Percentages: 30%, 40%
             r'\$[\d,]+[KMB]?',  # Money: $2M, $500K, $1,000
-            r'\d+[KMB]?\+?\s*(?:users|customers|clients)',  # Scale: 10K users
-            # Actions with numbers
-            r'(?:increased|reduced|improved|grew|saved|generated)\s+(?:by\s+)?\d+',
+            # Scale: 10K users, 50 requests
+            r'\d+[KMB]?\+?\s*(?:users|customers|clients|requests)',
+            # Actions with numbers (more flexible pattern)
+            r'(?:increased|reduced|improved|grew|saved|generated|enhanced|optimized|achieved)[\s\w]*\d+',
+            r'from\s+\d+\s+to\s+\d+',  # "from 60 to 95"
+            r'\d+\s*(?:ms|seconds?|minutes?|hours?)',  # Time: 200ms, 5 seconds
         ]
 
         for bullet in bullets:
@@ -360,40 +388,6 @@ class ResumeParser:
 
         # Deduplicate and return
         return list(set(keywords))[:50]
-
-    def _calculate_confidence(self, text: str) -> float:
-        """
-        Calculate parsing confidence based on text quality and extraction success.
-
-        Confidence score 0.0-1.0 based on:
-        - Text length and quality
-        - Presence of resume sections (experience, education, skills)
-        - Successful extraction of key fields
-        """
-        if not text or len(text) < 100:
-            return 0.0
-
-        # Check for common resume sections
-        section_indicators = [
-            r"experience", r"education", r"skills", r"work history",
-            r"employment", r"degree", r"university", r"college"
-        ]
-
-        matches = sum(1 for indicator in section_indicators if re.search(
-            indicator, text, re.IGNORECASE))
-
-        # Base confidence on section presence
-        base_confidence = min(1.0, (matches / len(section_indicators)) + 0.3)
-
-        # Adjust for text quality
-        if len(text) > 1000:  # Substantial content
-            base_confidence += 0.1
-        if re.search(r'\d{4}', text):  # Contains years (likely dates)
-            base_confidence += 0.05
-        if re.search(r'@', text):  # Contains email
-            base_confidence += 0.05
-
-        return min(1.0, base_confidence)
 
 
 # Create singleton instance

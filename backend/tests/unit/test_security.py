@@ -4,6 +4,7 @@ Constitution Principle VI: Test-Driven Phase Completion
 Target: ≥90% coverage per T022b requirement
 """
 import pytest
+import time
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException
@@ -457,6 +458,7 @@ class TestTokenEdgeCases:
         email = "multi@example.com"
 
         token1 = generate_token(user_id, email, token_type="access")
+        time.sleep(1.1)  # Sleep to ensure different iat timestamp
         token2 = generate_token(user_id, email, token_type="access")
 
         # Tokens should be different (different iat timestamp)
