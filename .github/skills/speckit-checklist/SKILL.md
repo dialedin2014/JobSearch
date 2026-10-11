@@ -1,5 +1,8 @@
 ---
-description: Generate a custom checklist for the current feature based on user requirements.
+name: "speckit-checklist"
+description: "Generate a custom checklist for the current feature based on user requirements."
+user-invocable: true
+disable-model-invocation: false
 ---
 
 ## Checklist Purpose: "Unit Tests for English"

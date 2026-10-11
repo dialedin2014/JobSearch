@@ -1,5 +1,8 @@
 ---
-description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
+name: "speckit-tasks"
+description: "Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts."
+user-invocable: true
+disable-model-invocation: false
 ---
 
 ## User Input

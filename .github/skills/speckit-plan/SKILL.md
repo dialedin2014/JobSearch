@@ -1,5 +1,8 @@
 ---
-description: Execute the implementation planning workflow using the plan template to generate design artifacts.
+name: "speckit-plan"
+description: "Execute the implementation planning workflow using the plan template to generate design artifacts."
+user-invocable: true
+disable-model-invocation: false
 ---
 
 ## User Input
